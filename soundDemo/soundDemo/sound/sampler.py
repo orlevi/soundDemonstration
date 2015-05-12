@@ -85,6 +85,12 @@ class Sampler(object):
         self._xs = numpy.arange(self._chunks_to_record * self._buffer_size) * self._sec_per_point
         self._audio = numpy.empty((self._chunks_to_record * self._buffer_size), dtype=NUMPY_DATA_FORMAT)
 
+    def close_pyaudio_nicely(self):
+        logging.debug("closing PyAudio nicely")
+        self._inStream.stop_stream()
+        self._inStream.close()
+        self._p.terminate()
+
     def _record(self):
         """record secToRecord seconds of audio."""
 
@@ -184,6 +190,8 @@ if __name__ == '__main__':
         fig.canvas.draw()
         fig.canvas.flush_events()
         time.sleep(0.05)
+
+    s.close_pyaudio_nicely()
 
 
 
