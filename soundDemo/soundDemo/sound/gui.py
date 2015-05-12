@@ -106,6 +106,8 @@ class gui():
         self.fps_Clock = pygame.time.Clock()                    # set the FPS clock
         self.canvas = pygame.display.set_mode((WIDTH, HEIGHT), RESIZABLE)
         pygame.display.set_caption('Sound Demonstrations')
+        icon = pygame.transform.scale(pygame.image.load('glass.png'), (32, 32))
+        pygame.display.set_icon(icon)
         self.done = False
         self.buttons = []
         
