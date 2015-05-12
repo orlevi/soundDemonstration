@@ -5,6 +5,11 @@ Created on May 11 2015
 '''
 import pygame
 from pygame.locals import *
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.backends.backend_agg as agg
+import pylab
+
 
 #canvas size constants
 WIDTH = 600
@@ -19,6 +24,17 @@ BLACK = (0,0,0)
 #events constants
 LEFT = 1
 
+class Plotter():
+    
+    def __init__(self, position, size):
+        self.position = position
+        self.size = size
+        
+    def draw(self, canvas):
+        pygame.draw.rect(canvas, BLACK, (self.position[1],self.position[0],self.size[1],self.size[0]), 1)
+
+
+
 class Button():
     
     def __init__(self, position, size, text, func = None, *args):
@@ -29,6 +45,7 @@ class Button():
         self.func = func
         self.args = args
         self.font = pygame.font.SysFont("monospace", 20)
+        
         
     def check_click(self, pos):
         if (pos[1] >= self.position[0]) and (pos[1] <= self.position[0]+self.size[0]) and (pos[0] >= self.position[1]) and (pos[0] <= self.position[1]+self.size[1]):
@@ -53,6 +70,8 @@ class Button():
         label = self.font.render(self.text, 1, BLACK)
         canvas.blit(label, (self.position[1]+(self.size[1]-label.get_width())/2,self.position[0]+(self.size[0]-self.font.get_height())/2))
         
+     
+        
 
 class gui():
 
@@ -67,12 +86,14 @@ class gui():
         self.done = False
         self.buttons = []
         
-        self.buttons.append(Button((50,100),(50,100),"Play"))
-        self.buttons.append(Button((110,100),(50,100),"+1Hz"))
-        self.buttons.append(Button((170,100),(50,100),"+0.1Hz"))
-        self.buttons.append(Button((230,100),(50,100),"-0.1Hz"))
-        self.buttons.append(Button((290,100),(50,100),"-1Hz"))
-        self.buttons.append(Button((350,100),(50,100),"FFT"))
+        self.buttons.append(Button((50,50),(50,100),"Play"))
+        self.buttons.append(Button((110,50),(50,100),"+1Hz"))
+        self.buttons.append(Button((170,50),(50,100),"+0.1Hz"))
+        self.buttons.append(Button((230,50),(50,100),"-0.1Hz"))
+        self.buttons.append(Button((290,50),(50,100),"-1Hz"))
+        self.buttons.append(Button((350,50),(50,100),"FFT"))
+        
+        self.plotter = Plotter((50,175), (400,400))
         
         
         
@@ -83,7 +104,7 @@ class gui():
         self.canvas.fill(GRAY)
         for button in self.buttons:
             button.draw(self.canvas)########################################################## 
-        
+        self.plotter.draw(self.canvas)
         
     def main_loop(self):
         while not self.done:
