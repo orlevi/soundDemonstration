@@ -22,7 +22,7 @@ LIGHT_GRAY = (224,224,224)
 DARK_GRAY = (128,128,128)
 WHITE = (255,255,255)
 BLACK = (0,0,0)
-Y_SCALE = 1
+Y_SCALE = 100
 #events constants
 LEFT = 1
 
@@ -31,54 +31,73 @@ class Plotter():
     def __init__(self, position, size):
         self.position = position
         self.size = size
-        self.font = pygame.font.SysFont("monospace", 20)
+        self.font = pygame.font.SysFont("monospace", 10)
         
     def draw(self, canvas, x_data, y_data):
+        line = self.create_graph_vector(x_data, y_data)
+        # draw the graph frame
         pygame.draw.rect(canvas, WHITE, (self.position[0],self.position[1],self.size[0],self.size[1]), 0)        
         pygame.draw.rect(canvas, BLACK, (self.position[0],self.position[1],self.size[0],self.size[1]), 1)
+        # draw the graph line (data)
+        pygame.draw.lines(canvas, BLACK, 0, line)
+        # draw labels and ticks
+        label0 = self.font.render(str(x_data[0]), 1, BLACK)
+        canvas.blit(label0, (self.position[0]-label0.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
+        label1 = self.font.render(str(x_data[len(x_data)/4]), 1, BLACK)
+        canvas.blit(label1, (self.position[0]+self.size[0]/4-label1.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
+        label2 = self.font.render(str(x_data[len(x_data)/2]), 1, BLACK)  
+        canvas.blit(label2, (self.position[0]+self.size[0]/2-label2.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
+        label3 = self.font.render(str(x_data[3*len(x_data)/4]), 1, BLACK)  
+        canvas.blit(label3, (self.position[0]+3*self.size[0]/4-label3.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
+        label4 = self.font.render(str(x_data[len(x_data)-1]), 1, BLACK)  
+        canvas.blit(label4, (self.position[0]+self.size[0]-label4.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))      
+        pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
+        pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/4, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/4,self.position[1] + 0.96*self.size[1]))   
+        pygame.draw.line(canvas, BLACK, (self.position[0] + 3*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 3*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
+        pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/2, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/2,self.position[1] + 0.96*self.size[1]))   
+        pygame.draw.line(canvas, BLACK, (self.position[0] + 5*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 5*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
+        pygame.draw.line(canvas, BLACK, (self.position[0] + 3*self.size[0]/4, self.position[1] + self.size[1]-1), (self.position[0] + 3*self.size[0]/4,self.position[1] + 0.96*self.size[1]))   
+        pygame.draw.line(canvas, BLACK, (self.position[0] + 7*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 7*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
+        
+    def create_graph_vector(self, x_data, y_data):
         x_scale = float(self.size[0]) / (len(x_data)+1)
         line = []
         real_x_pos = self.position[0]
         for y in y_data:
             real_x_pos = float(real_x_pos + x_scale)
-            real_y_pos = self.position[1] + self.size[1] - y * Y_SCALE
+            y_shift = y * Y_SCALE    ######################################################
+            if y_shift <= 0:          ############################################################
+                y_shift = 1          ######################################################
+            elif y_shift > self.size[1]:######################################################
+                y_shift = self.size[1]######################################################
+            real_y_pos = self.position[1] + self.size[1] - y_shift
             line.append((real_x_pos, real_y_pos))
-        pygame.draw.lines(canvas, BLACK, 0, line)
-        pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/4, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/4,self.position[1] + 0.96*self.size[1]))   
-        label1 = self.font.render(str(x_data[len(x_data)/4]), 1, BLACK)
-        canvas.blit(label1, (self.position[0]+self.size[0]/4-label1.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-        pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/2, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/2,self.position[1] + 0.96*self.size[1]))   
-        label2 = self.font.render(str(x_data[len(x_data)/2]), 1, BLACK)  
-        canvas.blit(label2, (self.position[0]+self.size[0]/2-label1.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-        pygame.draw.line(canvas, BLACK, (self.position[0] + 3*self.size[0]/4, self.position[1] + self.size[1]-1), (self.position[0] + 3*self.size[0]/4,self.position[1] + 0.96*self.size[1]))   
-        label3 = self.font.render(str(x_data[3*len(x_data)/4]), 1, BLACK)  
-        canvas.blit(label3, (self.position[0]+3*self.size[0]/4-label1.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))      
-        pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
-        pygame.draw.line(canvas, BLACK, (self.position[0] + 3*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 3*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
-        pygame.draw.line(canvas, BLACK, (self.position[0] + 5*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 5*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
-        pygame.draw.line(canvas, BLACK, (self.position[0] + 7*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 7*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
-        
+        return line
+
 
 class Button():
     
-    def __init__(self, position, size, text, func = None, *args):
+    def __init__(self, position, size, text, press_func = None, release_func = None):
         self.position = position
         self.size = size
         self.text = text
         self.is_clicked = False
-        self.func = func
-        self.args = args
+        self.press_func = press_func
+        self.release_func = release_func
         self.font = pygame.font.SysFont("monospace", 20)
                 
     def check_click(self, pos):
         if (pos[1] >= self.position[0]) and (pos[1] <= self.position[0]+self.size[0]) and (pos[0] >= self.position[1]) and (pos[0] <= self.position[1]+self.size[1]):
             self.is_clicked = True
-            if self.func != None:
-                self.func(self.args)
+            if self.press_func != None:
+                self.press_func()
                 
             
     def click_release(self):
-        self.is_clicked = False
+        if self.is_clicked:
+            self.is_clicked = False
+            if self.release_func != None:
+                self.release_func()
             
     def draw(self, canvas):
         if self.is_clicked:
@@ -96,9 +115,9 @@ class Button():
     
         
 
-class gui():
+class Gui():
 
-    def __init__(self):
+    def __init__(self, interface, sampler, player):
         '''
         Constructor
         '''
@@ -109,14 +128,18 @@ class gui():
         icon = pygame.transform.scale(pygame.image.load('glass.png'), (32, 32))
         pygame.display.set_icon(icon)
         self.done = False
-        self.buttons = []
         
-        self.buttons.append(Button((50,50),(50,100),"Play"))
+        self.interface = interface
+        self.sampler = sampler
+        self.player = player
+        
+        self.buttons = []
+        self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
         self.buttons.append(Button((110,50),(50,100),"+1Hz"))
         self.buttons.append(Button((170,50),(50,100),"+0.1Hz"))
         self.buttons.append(Button((230,50),(50,100),"-0.1Hz"))
         self.buttons.append(Button((290,50),(50,100),"-1Hz"))
-        self.buttons.append(Button((350,50),(50,100),"FFT"))
+        self.buttons.append(Button((350,50),(50,100),"FFT", self.sampler.start_microphone_sampling))
         
         self.plotter = Plotter((175,50), (400,400))
         
@@ -127,18 +150,14 @@ class gui():
             self.y_line.append(i/50.0)####################################################################################
       
         self.main_loop()                                        # start the main loop of the gui
-        
+    
     def draw(self):
-        
+        if self.sampler.has_new_fft():
+            self.x_line, self.y_line = self.sampler.get_fft_data()
         self.canvas.fill(GRAY)
         for button in self.buttons:
             button.draw(self.canvas)########################################################## 
         self.plotter.draw(self.canvas, self.x_line, self.y_line)
-        
-    def demo_sine(self):#########################################################################
-        self.phase = self.phase + 0.05
-        for i in range(len(self.x_line)):
-            self.y_line[i] = 60*(numpy.sin(self.x_line[i]/50.0+self.phase) + 1)
         
     def main_loop(self):
         while not self.done:
@@ -158,12 +177,12 @@ class gui():
             self.fps_Clock.tick(60)
             
             
-            self.demo_sine()####################################################################
+            #self.demo_sine()####################################################################
             
         pygame.quit
         
 
-gui()        
+#gui()        
 
                     
         
