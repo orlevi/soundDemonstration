@@ -12,7 +12,7 @@ class Interface():
         finetune = 0.5
         coarsetune = 2
 
-    def mute(self)
+    def mute(self):
         self.vol = 0
         
 	def increaseVol(self):
