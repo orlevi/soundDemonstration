@@ -16,13 +16,13 @@ BITRATE = 48100
 PYAUDIO_FORMAT = pyaudio.paInt16
 NUMPY_DATA_FORMAT = numpy.int16
 PYAUDIO_BUFFER_SIZE = 4096
-TIME_TO_RECORD = 0.1  # time to record before calculating fft
+TIME_TO_RECORD = 0.02 # time to record before calculating fft
 
 
 class Sampler(object):
     def __init__(self, microphone_sampling_time=10):
         self._microphone_sampling_time = microphone_sampling_time
-        self._peakFFT = None
+        self._peakFFT = (0, 0)
         self._stop_recording_thread = False  # flag to kill recorder and fft computer threads
         self._new_audio = False  # flag to inform about new audio data from recorder thread
         self._new_fft = False
@@ -33,6 +33,8 @@ class Sampler(object):
 
         self._log_scale = False  # should FFT be represented in dB
         self._fft_data = None  # hold computed fft
+
+        self._fft_frequencies = None
         self._audio = None  # hold recorded audio
 
         self._time_sampling_start = None  # hold the time start_microphone_sampling() was called and started to sample microphone
@@ -41,16 +43,32 @@ class Sampler(object):
         logging.debug("finished init")
 
     def has_new_fft(self):
+        """
+        flag to ensure new FFT data is available
+        :return:
+        """
         return self._new_fft
 
     def get_fft_data(self):
+        """
+        return momentary FFT data
+        :return: tuple of (FFT frequeny axis, values)
+        """
         self._new_fft = False
-        return self._fft_data
+        return self._fft_frequencies, self._fft_data
 
     def get_peak_fft(self):
+        """
+        return strongest frequency (Hold On)
+        :return: a tuple of (frequency, value)
+        """
         return self._peakFFT
 
     def start_microphone_sampling(self):
+        """
+        start to probe microphone for microphone_sampling_time time and compute FFT
+        :return:
+        """
         # open microphone stream
         self._init_recorder()
 
@@ -64,15 +82,15 @@ class Sampler(object):
 
         self._time_sampling_start = time.clock()
 
-        # update peakFFT ?
 
     def _init_recorder(self):
         """
         initialize all kind of buffers
         open stream to microphone
+        calculate Frequency Axis of FFT
         :return:
         """
-        self._buffers_to_record = max(1, int(self._bitrate * self._sec_to_record / self._buffer_size))
+        self._buffers_to_record = max(1, int(self._bitrate * self._sec_to_record / self._buffer_size))  # how many full pyaudio buffers in time*bitrate
         self._samples_to_record = int(self._buffer_size * self._buffers_to_record)
         self._chunks_to_record = int(self._samples_to_record / self._buffer_size)
         self._sec_per_point = 1.0 / self._bitrate
@@ -84,15 +102,24 @@ class Sampler(object):
         self._xs_buffer = numpy.arange(self._buffer_size) * self._sec_per_point
         self._xs = numpy.arange(self._chunks_to_record * self._buffer_size) * self._sec_per_point
         self._audio = numpy.empty((self._chunks_to_record * self._buffer_size), dtype=NUMPY_DATA_FORMAT)
+        self._fft_frequencies = numpy.arange(self._chunks_to_record * self._buffer_size/2) * self._bitrate / (self._chunks_to_record * self._buffer_size)  # hold FFT frequncy axis values
 
     def close_pyaudio_nicely(self):
+        """
+        close streams and pyaudio object
+        :return:
+        """
         logging.debug("closing PyAudio nicely")
         self._inStream.stop_stream()
         self._inStream.close()
         self._p.terminate()
 
     def _record(self):
-        """record secToRecord seconds of audio."""
+        """
+        record secToRecord seconds of audio.
+        save data in self._audio
+        when new data was written, raise flag self._new_audio, do not read new data until flag is down
+        """
 
         logging.debug("started recorder thread")
 
@@ -105,10 +132,14 @@ class Sampler(object):
                 t = time.clock()
                 if t - self._time_sampling_start > self._microphone_sampling_time:
                     self._stop_recording_thread = True
+
+            time.sleep(0.01)
         logging.debug("ended recorder thread")
 
     def _get_audio(self):
-        """get a single buffer size worth of audio."""
+        """
+        get a single buffer size worth of audio.
+        """
         audio_string = self._inStream.read(self._buffer_size)
         return numpy.fromstring(audio_string, dtype=NUMPY_DATA_FORMAT)
 
@@ -127,62 +158,66 @@ class Sampler(object):
                 #logging.debug("wrote new fft data")
         logging.debug("ended fft thread")
 
-    def _fft(self, trimBy=10, logScale=True, divBy=100):
-        '''
+    def _fft(self, log_scale=True):
+        """
+        compute fft on self._audio
+        :param log_scale: if True, update FFT data in dB
+        :return:
+        """
+
         data = self._audio
-        #logging.debug("data length: {}".format(len(data)))
         ys = numpy.fft.fftshift(numpy.fft.fft(data))
-        s = 2048
-        ys = ys[s:]
-        #logging.debug("f length: {}".format(len(ys)))
-        xs = numpy.linspace(0, BITRATE/2, 2048)
-        '''
+        ys = abs((ys[len(ys)/2:]))
+        if log_scale:
+            ys = 20 * numpy.log10(ys)
+        max_p = ys.argmax()
+        max_val = ys[max_p]
 
-
-        data = self._audio.flatten()
-        left, right = numpy.split(numpy.abs(numpy.fft.fft(data)), 2)
-        ys = numpy.add(left, right[::-1])
-        if logScale:
-            ys = numpy.multiply(20, numpy.log10(ys))
-        xs = numpy.arange(self._buffer_size/2, dtype=float)
-        if trimBy:
-            i = int((self._buffer_size/2)/trimBy)
-            ys = ys[:i]
-            xs = xs[:i]*self._bitrate/self._buffer_size
-        if divBy:
-            ys = ys/float(divBy)
-        self._fft_data = [xs, ys]
+        # check if we have a value greater than self._peakFFT
+        if max_val > self._peakFFT[1]:
+            self._peakFFT = (self._fft_frequencies[max_p], max_val)
+        self._fft_data = ys
         self._new_fft = True
+
 
 if __name__ == '__main__':
     plt.ion()
     fig, ax = plt.subplots()
-    data, = ax.plot([], [])
-    ax.set_autoscaley_on(True)
+    data, = ax.plot([], [], '.')
+    data2, = ax.plot([], [], 'o')
+    #ax.set_autoscaley_on(True)
     ax.grid()
-    ax.set_ylim([0.5, 2])
-    ax.set_xlim([0, 2500])
+    ax.set_ylim([0, 300])
+    ax.set_xlim([0, 2000])
     ax.set_title('momentary FFT')
     ax.set_xlabel('frequency [Khz]')
     ax.set_ylabel('power [Log]')
 
 
     # create Sampler object
-    s = Sampler(microphone_sampling_time=6)
+    s = Sampler(microphone_sampling_time=30)
 
     # when wanted, call start_microphone_sampling()
     s.start_microphone_sampling()
-
+    first = True
     t0 = tc = time.clock()
-    while tc - t0 < 10:
+    while tc - t0 < 33:
         tc = time.clock()
         if s.has_new_fft():  # check if new FFT data is ready
             try:
                 x, y = s.get_fft_data()  # get new FFT data
+                if first:
+                    logging.debug('data size, x: {}, y: {}, '.format(len(x), len(y)))
+                    first = False
+                a, b = s.get_peak_fft()
                 data.set_xdata(x)
                 data.set_ydata(y)
+                data2.set_xdata(a)
+                data2.set_ydata(b)
+
+
                 ax.relim()
-                #ax.autoscale_view()
+                ax.autoscale_view()
                 fig.canvas.draw()
                 fig.canvas.flush_events()
             except Exception:
