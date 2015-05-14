@@ -12,15 +12,15 @@ import time
 import logging
 
 ################# Global Consts
-BITRATE = 48100
+BITRATE = 44100
 PYAUDIO_FORMAT = pyaudio.paInt16
 NUMPY_DATA_FORMAT = numpy.int16
-PYAUDIO_BUFFER_SIZE = 4096
-TIME_TO_RECORD = 0.02 # time to record before calculating fft
+PYAUDIO_BUFFER_SIZE = 1024
+TIME_TO_RECORD = 0.15  # time to record before calculating fft
 
 
 class Sampler(object):
-    def __init__(self, microphone_sampling_time=10):
+    def __init__(self, microphone_sampling_time=60*60):
         self._microphone_sampling_time = microphone_sampling_time
         self._peakFFT = (0, 0)
         self._stop_recording_thread = False  # flag to kill recorder and fft computer threads
@@ -64,6 +64,9 @@ class Sampler(object):
         """
         return self._peakFFT
 
+    def reset_max_fft(self):
+        self._peakFFT = (0,0)
+
     def start_microphone_sampling(self):
         """
         start to probe microphone for microphone_sampling_time time and compute FFT
@@ -103,6 +106,8 @@ class Sampler(object):
         self._xs = numpy.arange(self._chunks_to_record * self._buffer_size) * self._sec_per_point
         self._audio = numpy.empty((self._chunks_to_record * self._buffer_size), dtype=NUMPY_DATA_FORMAT)
         self._fft_frequencies = numpy.arange(self._chunks_to_record * self._buffer_size/2) * self._bitrate / (self._chunks_to_record * self._buffer_size)  # hold FFT frequncy axis values
+        self._fft_frequencies = self._fft_frequencies[5:128]
+
 
     def close_pyaudio_nicely(self):
         """
@@ -110,6 +115,8 @@ class Sampler(object):
         :return:
         """
         logging.debug("closing PyAudio nicely")
+        self._stop_recording_thread = True
+        time.sleep(0.3)
         self._inStream.stop_stream()
         self._inStream.close()
         self._p.terminate()
@@ -168,6 +175,7 @@ class Sampler(object):
         data = self._audio
         ys = numpy.fft.fftshift(numpy.fft.fft(data))
         ys = abs((ys[len(ys)/2:]))
+        ys = ys[5:128]
         if log_scale:
             ys = 20 * numpy.log10(ys)
         max_p = ys.argmax()
@@ -195,7 +203,7 @@ if __name__ == '__main__':
 
 
     # create Sampler object
-    s = Sampler(microphone_sampling_time=30)
+    s = Sampler(microphone_sampling_time=3000)
 
     # when wanted, call start_microphone_sampling()
     s.start_microphone_sampling()

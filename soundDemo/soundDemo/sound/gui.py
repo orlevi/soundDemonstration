@@ -22,7 +22,7 @@ LIGHT_GRAY = (224,224,224)
 DARK_GRAY = (128,128,128)
 WHITE = (255,255,255)
 BLACK = (0,0,0)
-Y_SCALE = 100
+Y_SCALE = 2
 #events constants
 LEFT = 1
 
@@ -128,19 +128,22 @@ class Gui():
         icon = pygame.transform.scale(pygame.image.load('glass.png'), (32, 32))
         pygame.display.set_icon(icon)
         self.done = False
-        
+        self.font = pygame.font.SysFont("monospace", 30)
+
         self.interface = interface
         self.sampler = sampler
         self.player = player
         
         self.buttons = []
-        self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
-        self.buttons.append(Button((110,50),(50,100),"+1Hz"))
-        self.buttons.append(Button((170,50),(50,100),"+0.1Hz"))
-        self.buttons.append(Button((230,50),(50,100),"-0.1Hz"))
-        self.buttons.append(Button((290,50),(50,100),"-1Hz"))
+        self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave))
+        #self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
+        self.buttons.append(Button((110,50),(50,100),"+1Hz", self.interface.increaseFreq))
+        self.buttons.append(Button((170,50),(50,100),"+0.1Hz", self.interface.increaseFreqFine))
+        self.buttons.append(Button((230,50),(50,100),"-0.1Hz", self.interface.decreaseFreqFine))
+        self.buttons.append(Button((290,50),(50,100),"-1Hz", self.interface.decreaseFreq))
         self.buttons.append(Button((350,50),(50,100),"FFT", self.sampler.start_microphone_sampling))
-        
+        self.buttons.append(Button((410,50),(50,100),"RESET MAX", self.sampler.reset_max_fft))
+
         self.plotter = Plotter((175,50), (400,400))
         
         self.phase = 0 ####################################################################################
@@ -158,12 +161,18 @@ class Gui():
         for button in self.buttons:
             button.draw(self.canvas)########################################################## 
         self.plotter.draw(self.canvas, self.x_line, self.y_line)
+        label = self.font.render(str(self.interface.freq), 1, BLACK)
+        self.canvas.blit(label, (400,400))
+        label = self.font.render(str(self.sampler.get_peak_fft()[0]), 1, BLACK)
+        self.canvas.blit(label, (400,500))
+
         
     def main_loop(self):
         while not self.done:
             for event in pygame.event.get():
                 # exit if ESC pressed or 'x' clicked. 
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):     
+                    self.sampler.close_pyaudio_nicely()
                     self.done = True
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == LEFT:
                     for button in self.buttons:
