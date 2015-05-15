@@ -39,18 +39,21 @@ class Plotter():
         pygame.draw.rect(canvas, WHITE, (self.position[0],self.position[1],self.size[0],self.size[1]), 0)        
         pygame.draw.rect(canvas, BLACK, (self.position[0],self.position[1],self.size[0],self.size[1]), 1)
         # draw the graph line (data)
-        pygame.draw.lines(canvas, BLACK, 0, line)
-        # draw labels and ticks
-        label0 = self.font.render(str(x_data[0]), 1, BLACK)
-        canvas.blit(label0, (self.position[0]-label0.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-        label1 = self.font.render(str(x_data[len(x_data)/4]), 1, BLACK)
-        canvas.blit(label1, (self.position[0]+self.size[0]/4-label1.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-        label2 = self.font.render(str(x_data[len(x_data)/2]), 1, BLACK)  
-        canvas.blit(label2, (self.position[0]+self.size[0]/2-label2.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-        label3 = self.font.render(str(x_data[3*len(x_data)/4]), 1, BLACK)  
-        canvas.blit(label3, (self.position[0]+3*self.size[0]/4-label3.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-        label4 = self.font.render(str(x_data[len(x_data)-1]), 1, BLACK)  
-        canvas.blit(label4, (self.position[0]+self.size[0]-label4.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))      
+        if line != []:
+            pygame.draw.lines(canvas, BLACK, 0, line)
+        # draw labels
+        if x_data != []:
+            label0 = self.font.render(str(x_data[0]), 1, BLACK)
+            canvas.blit(label0, (self.position[0]-label0.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
+            label1 = self.font.render(str(x_data[len(x_data)/4]), 1, BLACK)
+            canvas.blit(label1, (self.position[0]+self.size[0]/4-label1.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
+            label2 = self.font.render(str(x_data[len(x_data)/2]), 1, BLACK)  
+            canvas.blit(label2, (self.position[0]+self.size[0]/2-label2.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
+            label3 = self.font.render(str(x_data[3*len(x_data)/4]), 1, BLACK)  
+            canvas.blit(label3, (self.position[0]+3*self.size[0]/4-label3.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
+            label4 = self.font.render(str(x_data[len(x_data)-1]), 1, BLACK)  
+            canvas.blit(label4, (self.position[0]+self.size[0]-label4.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))      
+        # draw ticks
         pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
         pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/4, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/4,self.position[1] + 0.96*self.size[1]))   
         pygame.draw.line(canvas, BLACK, (self.position[0] + 3*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 3*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
@@ -146,11 +149,8 @@ class Gui():
 
         self.plotter = Plotter((175,50), (400,400))
         
-        self.phase = 0 ####################################################################################
-        self.x_line = range(1000)####################################################################################
-        self.y_line = []####################################################################################
-        for i in self.x_line:####################################################################################
-            self.y_line.append(i/50.0)####################################################################################
+        self.x_line = []
+        self.y_line = []
       
         self.main_loop()                                        # start the main loop of the gui
     
@@ -159,10 +159,10 @@ class Gui():
             self.x_line, self.y_line = self.sampler.get_fft_data()
         self.canvas.fill(GRAY)
         for button in self.buttons:
-            button.draw(self.canvas)########################################################## 
+            button.draw(self.canvas) 
         self.plotter.draw(self.canvas, self.x_line, self.y_line)
         label = self.font.render(str(self.interface.freq), 1, BLACK)
-        self.canvas.blit(label, (400,400))
+        self.canvas.blit(label, (400,450))
         label = self.font.render(str(self.sampler.get_peak_fft()[0]), 1, BLACK)
         self.canvas.blit(label, (400,500))
 

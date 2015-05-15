@@ -11,7 +11,8 @@ import math
 
 
 FS = 44100
-CHUNK = 2048
+CHUNK = 1024
+FREQ_SHIFT = 1
 
 class Player():
     '''
@@ -24,13 +25,17 @@ class Player():
         self.last_val = 0
         
     def createWave(self):
-        frequency = self.interface.freq
+        freq = self.interface.freq
         time_line = [t + self.last_val for t in range(CHUNK)]
         self.last_val = time_line[-1] + 1
-        factor = float(frequency) * (math.pi) / FS
-        for i in range(len(time_line)):
-            time_line[i] = time_line[i] * factor
-        return numpy.sin(time_line) * self.interface.vol
+        output_wave = []
+        for t in time_line:
+            audio_sine = self.interface.vol * math.sin(2 * math.pi * freq * t / FS) 
+            strobe_sine = self.interface.vol * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
+            output_wave.append([audio_sine, strobe_sine])
+            #output_wave.append(strobe_sine)
+        
+        return numpy.array(output_wave)
         
             
     def nextSegment(self, in_data, frame_count, time_info, status):
