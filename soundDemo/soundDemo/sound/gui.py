@@ -22,6 +22,8 @@ LIGHT_GRAY = (224,224,224)
 DARK_GRAY = (128,128,128)
 WHITE = (255,255,255)
 BLACK = (0,0,0)
+RED = (255,0,0)
+BLUE = (0,0,255)
 Y_SCALE = 2
 #events constants
 LEFT = 1
@@ -33,15 +35,32 @@ class Plotter():
         self.size = size
         self.font = pygame.font.SysFont("monospace", 10)
         
-    def draw(self, canvas, x_data, y_data):
-        line = self.create_graph_vector(x_data, y_data)
-        # draw the graph frame
+    def draw(self, canvas, freq, x_data, y_data_1, y_data_2 = []):
+        self.draw_frame(canvas)
+        self.draw_graphs(canvas, x_data, y_data_1, y_data_2)
+        self.draw_labels(canvas, x_data)
+        self.draw_ticks(canvas)
+        self.draw_freq_marker(canvas, freq, x_data)
+    
+    def draw_freq_marker(self, canvas, freq, x_data):
+        if x_data != []:
+            x_pos = (float(freq - x_data[0]) / (x_data[-1] - x_data[0])) * self.size[0]
+            pygame.draw.line(canvas, RED, (self.position[0] + x_pos, self.position[1] + self.size[1]-1), (self.position[0] + x_pos, self.position[1]), 3)   
+
+    
+    def draw_frame(self, canvas):
         pygame.draw.rect(canvas, WHITE, (self.position[0],self.position[1],self.size[0],self.size[1]), 0)        
         pygame.draw.rect(canvas, BLACK, (self.position[0],self.position[1],self.size[0],self.size[1]), 1)
-        # draw the graph line (data)
-        if line != []:
-            pygame.draw.lines(canvas, BLACK, 0, line)
-        # draw labels
+     
+    def draw_graphs(self, canvas, x_data, y_data_1, y_data_2): 
+        if y_data_1 != []:
+            graph_1 = self.create_graph_vector(x_data, y_data_1)
+            pygame.draw.lines(canvas, BLUE, 0, graph_1)
+        if y_data_2 != []:
+            graph_2 = self.create_graph_vector(x_data, y_data_2)
+            pygame.draw.lines(canvas, BLACK, 0, graph_2)
+             
+    def draw_labels(self, canvas, x_data):
         if x_data != []:
             label0 = self.font.render(str(x_data[0]), 1, BLACK)
             canvas.blit(label0, (self.position[0]-label0.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
@@ -53,26 +72,27 @@ class Plotter():
             canvas.blit(label3, (self.position[0]+3*self.size[0]/4-label3.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
             label4 = self.font.render(str(x_data[len(x_data)-1]), 1, BLACK)  
             canvas.blit(label4, (self.position[0]+self.size[0]-label4.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))      
-        # draw ticks
+        
+    def draw_ticks(self, canvas):
         pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
         pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/4, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/4,self.position[1] + 0.96*self.size[1]))   
         pygame.draw.line(canvas, BLACK, (self.position[0] + 3*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 3*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
         pygame.draw.line(canvas, BLACK, (self.position[0] + self.size[0]/2, self.position[1] + self.size[1]-1), (self.position[0] + self.size[0]/2,self.position[1] + 0.96*self.size[1]))   
         pygame.draw.line(canvas, BLACK, (self.position[0] + 5*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 5*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
         pygame.draw.line(canvas, BLACK, (self.position[0] + 3*self.size[0]/4, self.position[1] + self.size[1]-1), (self.position[0] + 3*self.size[0]/4,self.position[1] + 0.96*self.size[1]))   
-        pygame.draw.line(canvas, BLACK, (self.position[0] + 7*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 7*self.size[0]/8,self.position[1] + 0.98*self.size[1]))   
-        
+        pygame.draw.line(canvas, BLACK, (self.position[0] + 7*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 7*self.size[0]/8,self.position[1] + 0.98*self.size[1]))    
+      
     def create_graph_vector(self, x_data, y_data):
         x_scale = float(self.size[0]) / (len(x_data)+1)
         line = []
         real_x_pos = self.position[0]
         for y in y_data:
             real_x_pos = float(real_x_pos + x_scale)
-            y_shift = y * Y_SCALE    ######################################################
-            if y_shift <= 0:          ############################################################
-                y_shift = 1          ######################################################
-            elif y_shift > self.size[1]:######################################################
-                y_shift = self.size[1]######################################################
+            y_shift = y * Y_SCALE    
+            if y_shift <= 0:      
+                y_shift = 1     
+            elif y_shift > self.size[1]:
+                y_shift = self.size[1]
             real_y_pos = self.position[1] + self.size[1] - y_shift
             line.append((real_x_pos, real_y_pos))
         return line
@@ -87,7 +107,7 @@ class Button():
         self.is_clicked = False
         self.press_func = press_func
         self.release_func = release_func
-        self.font = pygame.font.SysFont("monospace", 20)
+        self.font = pygame.font.SysFont("monospace", 18)
                 
     def check_click(self, pos):
         if (pos[1] >= self.position[0]) and (pos[1] <= self.position[0]+self.size[0]) and (pos[0] >= self.position[1]) and (pos[0] <= self.position[1]+self.size[1]):
@@ -160,11 +180,11 @@ class Gui():
         self.canvas.fill(GRAY)
         for button in self.buttons:
             button.draw(self.canvas) 
-        self.plotter.draw(self.canvas, self.x_line, self.y_line)
-        label = self.font.render(str(self.interface.freq), 1, BLACK)
-        self.canvas.blit(label, (400,450))
-        label = self.font.render(str(self.sampler.get_peak_fft()[0]), 1, BLACK)
-        self.canvas.blit(label, (400,500))
+        self.plotter.draw(self.canvas, self.interface.freq, self.x_line, self.y_line)
+        label = self.font.render("Current Freq  - "+str(self.interface.freq), 1, BLACK)
+        self.canvas.blit(label, (50,500))
+        label = self.font.render("Peak FFT Freq - "+str(self.sampler.get_peak_fft()[0]), 1, BLACK)
+        self.canvas.blit(label, (50,550))
 
         
     def main_loop(self):
