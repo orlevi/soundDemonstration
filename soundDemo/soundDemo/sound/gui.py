@@ -37,10 +37,10 @@ class Plotter():
         
     def draw(self, canvas, freq, x_data, y_data_1, y_data_2 = []):
         self.draw_frame(canvas)
+        self.draw_freq_marker(canvas, freq, x_data)
         self.draw_graphs(canvas, x_data, y_data_1, y_data_2)
         self.draw_labels(canvas, x_data)
         self.draw_ticks(canvas)
-        self.draw_freq_marker(canvas, freq, x_data)
     
     def draw_freq_marker(self, canvas, freq, x_data):
         if x_data != []:
@@ -53,12 +53,12 @@ class Plotter():
         pygame.draw.rect(canvas, BLACK, (self.position[0],self.position[1],self.size[0],self.size[1]), 1)
      
     def draw_graphs(self, canvas, x_data, y_data_1, y_data_2): 
+        if y_data_2 != []:
+            graph_2 = self.create_graph_vector(x_data, y_data_2)
+            pygame.draw.lines(canvas, DARK_GRAY, 0, graph_2)
         if y_data_1 != []:
             graph_1 = self.create_graph_vector(x_data, y_data_1)
             pygame.draw.lines(canvas, BLUE, 0, graph_1)
-        if y_data_2 != []:
-            graph_2 = self.create_graph_vector(x_data, y_data_2)
-            pygame.draw.lines(canvas, BLACK, 0, graph_2)
              
     def draw_labels(self, canvas, x_data):
         if x_data != []:
@@ -83,9 +83,9 @@ class Plotter():
         pygame.draw.line(canvas, BLACK, (self.position[0] + 7*self.size[0]/8, self.position[1] + self.size[1]-1), (self.position[0] + 7*self.size[0]/8,self.position[1] + 0.98*self.size[1]))    
       
     def create_graph_vector(self, x_data, y_data):
-        x_scale = float(self.size[0]) / (len(x_data)+1)
+        x_scale = float(self.size[0]-2) / (len(x_data)+1)
         line = []
-        real_x_pos = self.position[0]
+        real_x_pos = self.position[0]+1
         for y in y_data:
             real_x_pos = float(real_x_pos + x_scale)
             y_shift = y * Y_SCALE    
@@ -158,8 +158,8 @@ class Gui():
         self.player = player
         
         self.buttons = []
-        self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave))
-        #self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
+        #self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave)) # DEBUG, sticky button
+        self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
         self.buttons.append(Button((110,50),(50,100),"+1Hz", self.interface.increaseFreq))
         self.buttons.append(Button((170,50),(50,100),"+0.1Hz", self.interface.increaseFreqFine))
         self.buttons.append(Button((230,50),(50,100),"-0.1Hz", self.interface.decreaseFreqFine))
@@ -169,18 +169,20 @@ class Gui():
 
         self.plotter = Plotter((175,50), (400,400))
         
-        self.x_line = []
-        self.y_line = []
+        self.freq_line = []
+        self.fft_data = []
+        self.fft_peak_data = []
       
         self.main_loop()                                        # start the main loop of the gui
     
     def draw(self):
         if self.sampler.has_new_fft():
-            self.x_line, self.y_line = self.sampler.get_fft_data()
+            self.freq_line, self.fft_data = self.sampler.get_fft_data()
+            self.freq_line, self.fft_peak_data = self.sampler.get_peak_waveform()
         self.canvas.fill(GRAY)
         for button in self.buttons:
             button.draw(self.canvas) 
-        self.plotter.draw(self.canvas, self.interface.freq, self.x_line, self.y_line)
+        self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
         label = self.font.render("Current Freq  - "+str(self.interface.freq), 1, BLACK)
         self.canvas.blit(label, (50,500))
         label = self.font.render("Peak FFT Freq - "+str(self.sampler.get_peak_fft()[0]), 1, BLACK)
