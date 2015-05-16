@@ -16,7 +16,7 @@ BITRATE = 44100
 PYAUDIO_FORMAT = pyaudio.paInt16
 NUMPY_DATA_FORMAT = numpy.int16
 PYAUDIO_BUFFER_SIZE = 1024
-TIME_TO_RECORD = 0.15  # time to record before calculating fft
+TIME_TO_RECORD = 0.26  # time to record before calculating fft
 
 
 class Sampler(object):
@@ -26,6 +26,7 @@ class Sampler(object):
         self._stop_recording_thread = False  # flag to kill recorder and fft computer threads
         self._new_audio = False  # flag to inform about new audio data from recorder thread
         self._new_fft = False
+        self._peak_waveform = None
 
         self._bitrate = BITRATE
         self._buffer_size = PYAUDIO_BUFFER_SIZE
@@ -38,9 +39,16 @@ class Sampler(object):
         self._audio = None  # hold recorded audio
 
         self._time_sampling_start = None  # hold the time start_microphone_sampling() was called and started to sample microphone
+        self._already_started_recording = False
+        self._zero_padding_factor = 15  # number of sample length zeros to add (if we sampled 100 audio points add 100 * self._zero_padding_factor zeros)
+        self._begin_freq_bin = None
+        self._end_frequency_bin = None
 
+        self._first = True
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
         logging.debug("finished init")
+        self._init_recorder()
+        self.reset_max_fft()
 
     def has_new_fft(self):
         """
@@ -65,26 +73,71 @@ class Sampler(object):
         return self._peakFFT
 
     def reset_max_fft(self):
-        self._peakFFT = (0,0)
+        self._peakFFT = (0, 0)
+        self._peak_waveform = numpy.zeros(len(self._fft_frequencies))
+
+    def get_peak_waveform(self):
+        return self._fft_frequencies, self._peak_waveform
 
     def start_microphone_sampling(self):
         """
         start to probe microphone for microphone_sampling_time time and compute FFT
         :return:
         """
-        # open microphone stream
-        self._init_recorder()
+        if not self._already_started_recording:
+            self._already_started_recording = True
+            self._time_sampling_start = time.clock()
 
-        # open recorder thread
-        recorder_thread = threading.Thread(target=self._record)
-        recorder_thread.start()
+            # open microphone stream
+            #self._init_recorder()
 
-        # open fft computer thread
-        fft_thread = threading.Thread(target=self._fft_computer)
-        fft_thread.start()
+            # open recorder thread
+            recorder_thread = threading.Thread(target=self._record)
+            recorder_thread.start()
 
-        self._time_sampling_start = time.clock()
+            # open fft computer thread
+            fft_thread = threading.Thread(target=self._fft_computer)
+            fft_thread.start()
 
+
+    def close_pyaudio_nicely(self):
+        """
+        close streams and pyaudio object
+        :return:
+        """
+        logging.debug("closing PyAudio nicely")
+        self._stop_recording_thread = True
+        time.sleep(0.3)
+        self._inStream.stop_stream()
+        self._inStream.close()
+        self._p.terminate()
+
+    def change_frequency_range(self, min=None, max=None):
+        """
+        change the frequency range that  get_fft_data() and get_peak_waveform() will return
+        min and max frequency would not be exact, closest frequency in fft will be chosen
+        :param min: min frequency
+        :param max: max frequency
+        :return:
+        """
+        self._fft_frequencies = numpy.arange(self._chunks_to_record * self._buffer_size / 2.0) * self._bitrate / (self._chunks_to_record * self._buffer_size * (self._zero_padding_factor + 1.0))  # hold FFT frequncy axis values
+        logging.debug("in change_frequency_range, before:")
+        logging.debug("# FFT bins: {}".format(len(self._fft_frequencies)))
+        logging.debug("bins: {}".format(self._fft_frequencies))
+        logging.debug("frequency resolution: {}".format(self._fft_frequencies[1] - self._fft_frequencies[0]))
+
+        if min is not None and max is not None:
+            self._begin_freq_bin = numpy.searchsorted(self._fft_frequencies, min)
+            self._end_frequency_bin = numpy.searchsorted(self._fft_frequencies, max)
+            self._fft_frequencies = self._fft_frequencies[self._begin_freq_bin:self._end_frequency_bin]
+        else:
+            self._begin_freq_bin = 0
+            self._end_frequency_bin = len(self._fft_frequencies)
+
+        logging.debug("in change_frequency_range, after:")
+        logging.debug("# FFT bins: {}".format(len(self._fft_frequencies)))
+        logging.debug("bins: {}".format(self._fft_frequencies))
+        logging.debug("frequency resolution: {}".format(self._fft_frequencies[1] - self._fft_frequencies[0]))
 
     def _init_recorder(self):
         """
@@ -105,21 +158,7 @@ class Sampler(object):
         self._xs_buffer = numpy.arange(self._buffer_size) * self._sec_per_point
         self._xs = numpy.arange(self._chunks_to_record * self._buffer_size) * self._sec_per_point
         self._audio = numpy.empty((self._chunks_to_record * self._buffer_size), dtype=NUMPY_DATA_FORMAT)
-        self._fft_frequencies = numpy.arange(self._chunks_to_record * self._buffer_size/2) * self._bitrate / (self._chunks_to_record * self._buffer_size)  # hold FFT frequncy axis values
-        self._fft_frequencies = self._fft_frequencies[5:128]
-
-
-    def close_pyaudio_nicely(self):
-        """
-        close streams and pyaudio object
-        :return:
-        """
-        logging.debug("closing PyAudio nicely")
-        self._stop_recording_thread = True
-        time.sleep(0.3)
-        self._inStream.stop_stream()
-        self._inStream.close()
-        self._p.terminate()
+        self.change_frequency_range()
 
     def _record(self):
         """
@@ -173,9 +212,15 @@ class Sampler(object):
         """
 
         data = self._audio
+        if self._first:
+            logging.debug("data length without padding {}".format(len(data)))
+        data = numpy.concatenate((data, numpy.zeros([self._zero_padding_factor * len(data)])), 0)
+        if self._first:
+            logging.debug("data length with padding {}".format(len(data)))
+            self._first = False
         ys = numpy.fft.fftshift(numpy.fft.fft(data))
         ys = abs((ys[len(ys)/2:]))
-        ys = ys[5:128]
+        ys = ys[self._begin_freq_bin:self._end_frequency_bin]
         if log_scale:
             ys = 20 * numpy.log10(ys)
         max_p = ys.argmax()
@@ -184,6 +229,7 @@ class Sampler(object):
         # check if we have a value greater than self._peakFFT
         if max_val > self._peakFFT[1]:
             self._peakFFT = (self._fft_frequencies[max_p], max_val)
+            self._peak_waveform = ys
         self._fft_data = ys
         self._new_fft = True
 
@@ -193,6 +239,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     data, = ax.plot([], [], '.')
     data2, = ax.plot([], [], 'o')
+    data3, = ax.plot([], [], '--')
     #ax.set_autoscaley_on(True)
     ax.grid()
     ax.set_ylim([0, 300])
@@ -201,15 +248,14 @@ if __name__ == '__main__':
     ax.set_xlabel('frequency [Khz]')
     ax.set_ylabel('power [Log]')
 
-
     # create Sampler object
-    s = Sampler(microphone_sampling_time=3000)
-
+    s = Sampler(microphone_sampling_time=20)
+    s.change_frequency_range(200, 1000)
     # when wanted, call start_microphone_sampling()
     s.start_microphone_sampling()
     first = True
     t0 = tc = time.clock()
-    while tc - t0 < 33:
+    while tc - t0 < 15:
         tc = time.clock()
         if s.has_new_fft():  # check if new FFT data is ready
             try:
@@ -218,10 +264,13 @@ if __name__ == '__main__':
                     logging.debug('data size, x: {}, y: {}, '.format(len(x), len(y)))
                     first = False
                 a, b = s.get_peak_fft()
+                x1, y1 = s.get_peak_waveform()
                 data.set_xdata(x)
                 data.set_ydata(y)
                 data2.set_xdata(a)
                 data2.set_ydata(b)
+                data3.set_xdata(x1)
+                data3.set_ydata(y1)
 
 
                 ax.relim()
