@@ -62,15 +62,15 @@ class Plotter():
              
     def draw_labels(self, canvas, x_data):
         if x_data != []:
-            label0 = self.font.render(str(x_data[0]), 1, BLACK)
+            label0 = self.font.render("{0:.1f}".format(x_data[0]), 1, BLACK)
             canvas.blit(label0, (self.position[0]-label0.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-            label1 = self.font.render(str(x_data[len(x_data)/4]), 1, BLACK)
+            label1 = self.font.render("{0:.1f}".format(x_data[len(x_data)/4]), 1, BLACK)
             canvas.blit(label1, (self.position[0]+self.size[0]/4-label1.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-            label2 = self.font.render(str(x_data[len(x_data)/2]), 1, BLACK)  
+            label2 = self.font.render("{0:.1f}".format(x_data[len(x_data)/2]), 1, BLACK)  
             canvas.blit(label2, (self.position[0]+self.size[0]/2-label2.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-            label3 = self.font.render(str(x_data[3*len(x_data)/4]), 1, BLACK)  
+            label3 = self.font.render("{0:.1f}".format(x_data[3*len(x_data)/4]), 1, BLACK)  
             canvas.blit(label3, (self.position[0]+3*self.size[0]/4-label3.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))
-            label4 = self.font.render(str(x_data[len(x_data)-1]), 1, BLACK)  
+            label4 = self.font.render("{0:.1f}".format(x_data[len(x_data)-1]), 1, BLACK)  
             canvas.blit(label4, (self.position[0]+self.size[0]-label4.get_width()/2,self.position[1]+(self.size[1]+self.font.get_height()/8)))      
         
     def draw_ticks(self, canvas):
@@ -96,6 +96,16 @@ class Plotter():
             real_y_pos = self.position[1] + self.size[1] - y_shift
             line.append((real_x_pos, real_y_pos))
         return line
+    
+    def check_click(self, pos, x_data):
+        if x_data != []:
+            if (pos[0] >= self.position[0]) and (pos[0] <= self.position[0]+self.size[0]) and (pos[1] >= self.position[1]) and (pos[1] <= self.position[1]+self.size[1]):
+                return self.get_click_x_pos(pos, x_data)
+        return 0
+
+    def get_click_x_pos(self, pos, x_data):
+        x_pos = int(x_data[0] + (x_data[-1] - x_data[0]) * (pos[0] - self.position[0]) / float(self.size[0]))
+        return x_pos
 
 
 class Button():
@@ -183,10 +193,15 @@ class Gui():
         for button in self.buttons:
             button.draw(self.canvas) 
         self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
-        label = self.font.render("Current Freq  - "+str(self.interface.freq), 1, BLACK)
+        label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
         self.canvas.blit(label, (50,500))
-        label = self.font.render("Peak FFT Freq - "+str(self.sampler.get_peak_fft()[0]), 1, BLACK)
+        label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]), 1, BLACK)
         self.canvas.blit(label, (50,550))
+
+    def set_freq_from_plotter(self, pos):
+        freq = self.plotter.check_click(pos, self.freq_line)
+        if freq != 0:
+            self.interface.setFreq(freq)
 
         
     def main_loop(self):
@@ -199,6 +214,7 @@ class Gui():
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == LEFT:
                     for button in self.buttons:
                         button.check_click(event.pos)
+                    self.set_freq_from_plotter(event.pos)
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == LEFT:
                     for button in self.buttons:
                         button.click_release()
@@ -208,7 +224,6 @@ class Gui():
             self.fps_Clock.tick(60)
             
             
-            #self.demo_sine()####################################################################
             
         pygame.quit
         

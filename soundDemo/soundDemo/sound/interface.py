@@ -38,3 +38,6 @@ class Interface():
 
     def decreaseFreqFine(self):
         self.freq -= self.finetune
+        
+    def setFreq(self, freq):
+        self.freq = freq
