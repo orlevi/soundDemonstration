@@ -2,7 +2,6 @@ import interface
 import gui
 import sampler
 import player
-import pyaudio
 
 interface_i = interface.Interface(0.5, 761)
 sampler_i = sampler.Sampler()

@@ -5,10 +5,6 @@ Created on May 11 2015
 '''
 import pygame
 from pygame.locals import *
-import matplotlib
-matplotlib.use("TkAgg")
-import matplotlib.backends.backend_agg as agg
-import pylab
 import numpy
 
 
@@ -167,15 +163,45 @@ class Gui():
         self.sampler = sampler
         self.player = player
         
-        self.buttons = []
+        self.in_glass = True
+        self.in_chladni = False
+        self.in_ruben = False
+        
+        self.top_buttons = []
+        self.glass_buttons = []
+        self.chladni_buttons = []
+        self.ruben_buttons = []  
+        
+        self.top_buttons.append(Button((10,50),(30,150),"Wine Glass", self.set_glass))
+        self.top_buttons.append(Button((10,220),(30,150),"Chladni Plate", self.set_chladni))
+        self.top_buttons.append(Button((10,390),(30,150),"Ruben's Tube", self.set_ruben))
+
+              
         #self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave)) # DEBUG, sticky button
-        self.buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
-        self.buttons.append(Button((110,50),(50,100),"+1Hz", self.interface.increaseFreq))
-        self.buttons.append(Button((170,50),(50,100),"+0.1Hz", self.interface.increaseFreqFine))
-        self.buttons.append(Button((230,50),(50,100),"-0.1Hz", self.interface.decreaseFreqFine))
-        self.buttons.append(Button((290,50),(50,100),"-1Hz", self.interface.decreaseFreq))
-        self.buttons.append(Button((350,50),(50,100),"FFT", self.sampler.start_microphone_sampling))
-        self.buttons.append(Button((410,50),(50,100),"RESET MAX", self.sampler.reset_max_fft))
+        self.glass_buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
+        self.glass_buttons.append(Button((110,50),(50,100),"+1Hz", self.interface.increaseFreq))
+        self.glass_buttons.append(Button((170,50),(50,100),"+0.1Hz", self.interface.increaseFreqFine))
+        self.glass_buttons.append(Button((230,50),(50,100),"-0.1Hz", self.interface.decreaseFreqFine))
+        self.glass_buttons.append(Button((290,50),(50,100),"-1Hz", self.interface.decreaseFreq))
+        self.glass_buttons.append(Button((350,50),(50,100),"FFT", self.sampler.start_microphone_sampling))
+        self.glass_buttons.append(Button((410,50),(50,100),"RESET MAX", self.sampler.reset_max_fft))
+        
+        self.chladni_buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
+        self.chladni_buttons.append(Button((110,50),(50,100),"+1Hz", self.interface.increaseFreq))
+        self.chladni_buttons.append(Button((170,50),(50,100),"+0.1Hz", self.interface.increaseFreqFine))
+        self.chladni_buttons.append(Button((230,50),(50,100),"-0.1Hz", self.interface.decreaseFreqFine))
+        self.chladni_buttons.append(Button((290,50),(50,100),"-1Hz", self.interface.decreaseFreq))
+        self.chladni_buttons.append(Button((50,170),(150,330),"Chladni fixed freq I", self.chladni_fixed_1))
+        self.chladni_buttons.append(Button((220,170),(150,330),"Chladni fixed freq II", self.chladni_fixed_2))
+        
+        self.ruben_buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
+        self.ruben_buttons.append(Button((110,50),(50,100),"+1Hz", self.interface.increaseFreq))
+        self.ruben_buttons.append(Button((170,50),(50,100),"+0.1Hz", self.interface.increaseFreqFine))
+        self.ruben_buttons.append(Button((230,50),(50,100),"-0.1Hz", self.interface.decreaseFreqFine))
+        self.ruben_buttons.append(Button((290,50),(50,100),"-1Hz", self.interface.decreaseFreq))
+        self.ruben_buttons.append(Button((50,170),(120,330),"Rubn's tube fixed freq I", self.ruben_fixed_1))
+        self.ruben_buttons.append(Button((190,170),(120,330),"Rubn's tube fixed freq II", self.ruben_fixed_2))
+        self.ruben_buttons.append(Button((330,170),(120,330),"Rubn's tube fixed freq III", self.ruben_fixed_3))
 
         self.plotter = Plotter((175,50), (400,400))
         
@@ -190,19 +216,62 @@ class Gui():
             self.freq_line, self.fft_data = self.sampler.get_fft_data()
             self.freq_line, self.fft_peak_data = self.sampler.get_peak_waveform()
         self.canvas.fill(GRAY)
-        for button in self.buttons:
+        for button in self.top_buttons:
             button.draw(self.canvas) 
-        self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
-        label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
-        self.canvas.blit(label, (50,500))
-        label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]), 1, BLACK)
-        self.canvas.blit(label, (50,550))
+        if self.in_glass:
+            for button in self.glass_buttons:
+                button.draw(self.canvas) 
+            self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
+            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
+            self.canvas.blit(label, (50,500))
+            label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]), 1, BLACK)
+            self.canvas.blit(label, (50,550))
+        elif self.in_chladni:
+            for button in self.chladni_buttons:
+                button.draw(self.canvas)
+            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
+            self.canvas.blit(label, (50,500))
+        elif self.in_ruben:
+            for button in self.ruben_buttons:
+                button.draw(self.canvas)
+            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
+            self.canvas.blit(label, (50,500))
+        
 
     def set_freq_from_plotter(self, pos):
         freq = self.plotter.check_click(pos, self.freq_line)
         if freq != 0:
             self.interface.setFreq(freq)
+            
+    def set_glass(self):
+        self.in_glass = True
+        self.in_chladni = False
+        self.in_ruben = False
+        
+    def set_chladni(self):
+        self.in_glass = False 
+        self.in_chladni = True
+        self.in_ruben = False
+        
+    def set_ruben(self):
+        self.in_glass = False
+        self.in_chladni = False
+        self.in_ruben = True 
+        
+    def chladni_fixed_1(self):
+        self.interface.setFreq(350)
 
+    def chladni_fixed_2(self):
+        self.interface.setFreq(450)
+      
+    def ruben_fixed_1(self):
+        self.interface.setFreq(550) 
+         
+    def ruben_fixed_2(self):
+        self.interface.setFreq(650)
+        
+    def ruben_fixed_3(self):
+        self.interface.setFreq(750)
         
     def main_loop(self):
         while not self.done:
@@ -212,12 +281,32 @@ class Gui():
                     self.sampler.close_pyaudio_nicely()
                     self.done = True
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == LEFT:
-                    for button in self.buttons:
+                    for button in self.top_buttons:
                         button.check_click(event.pos)
-                    self.set_freq_from_plotter(event.pos)
+                        
+                    if self.in_glass:
+                        for button in self.glass_buttons:
+                            button.check_click(event.pos)
+                        self.set_freq_from_plotter(event.pos)
+                        
+                    elif self.in_chladni:
+                        for button in self.chladni_buttons:
+                            button.check_click(event.pos)
+                            
+                    elif self.in_ruben:
+                        for button in self.ruben_buttons:
+                            button.check_click(event.pos)
+                
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == LEFT:
-                    for button in self.buttons:
+                    for button in self.top_buttons:
                         button.click_release()
+                    for button in self.glass_buttons:
+                        button.click_release()
+                    for button in self.chladni_buttons:
+                        button.click_release()
+                    for button in self.ruben_buttons:
+                        button.click_release()
+                        
                                    
             self.draw()         
             pygame.display.update()
