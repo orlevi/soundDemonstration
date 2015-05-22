@@ -5,11 +5,10 @@ Created on May 11 2015
 '''
 import pygame
 from pygame.locals import *
-import numpy
 
 
 #canvas size constants
-WIDTH = 600
+WIDTH = 800
 HEIGHT = 600
 #drawing constants
 OFFSET = 2
@@ -19,6 +18,7 @@ DARK_GRAY = (128,128,128)
 WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (255,0,0)
+GREEN = (0,255,0)
 BLUE = (0,0,255)
 Y_SCALE = 2
 #events constants
@@ -106,10 +106,11 @@ class Plotter():
 
 class Button():
     
-    def __init__(self, position, size, text, press_func = None, release_func = None):
+    def __init__(self, position, size, text, press_func = None, release_func = None, color = GRAY):
         self.position = position
         self.size = size
         self.text = text
+        self.color = color
         self.is_clicked = False
         self.press_func = press_func
         self.release_func = release_func
@@ -134,10 +135,11 @@ class Button():
             color2 = LIGHT_GRAY
         else:
             color1 = LIGHT_GRAY
-            color2 = DARK_GRAY              
+            color2 = DARK_GRAY   
+                       
         pygame.draw.polygon(canvas, color1, [(self.position[1]-OFFSET, self.position[0]-OFFSET), (self.position[1]+self.size[1]+OFFSET-1, self.position[0]-OFFSET), (self.position[1]-OFFSET,self.position[0]+self.size[0]+OFFSET-1)], 0)
         pygame.draw.polygon(canvas, color2, [(self.position[1]+self.size[1]+OFFSET-1, self.position[0]-OFFSET), (self.position[1]+self.size[1]+OFFSET-1, self.position[0]+self.size[0]+OFFSET-1), (self.position[1]-OFFSET,self.position[0]+self.size[0]+OFFSET-1)], 0)
-        pygame.draw.rect(canvas, GRAY, (self.position[1],self.position[0],self.size[1],self.size[0]), 0)
+        pygame.draw.rect(canvas, self.color, (self.position[1],self.position[0],self.size[1],self.size[0]), 0)
         label = self.font.render(self.text, 1, BLACK)
         canvas.blit(label, (self.position[1]+(self.size[1]-label.get_width())/2,self.position[0]+(self.size[0]-self.font.get_height())/2))
         
@@ -185,6 +187,7 @@ class Gui():
         self.glass_buttons.append(Button((290,50),(50,100),"-1Hz", self.interface.decreaseFreq))
         self.glass_buttons.append(Button((350,50),(50,100),"FFT", self.sampler.start_microphone_sampling))
         self.glass_buttons.append(Button((410,50),(50,100),"RESET MAX", self.sampler.reset_max_fft))
+        self.glass_buttons.append(Button((470,50),(50,100),"Volume", self.switch_volume, color = GREEN))
         
         self.chladni_buttons.append(Button((50,50),(50,100),"Play", self.player.playWave, self.player.stopWave))
         self.chladni_buttons.append(Button((110,50),(50,100),"+1Hz", self.interface.increaseFreq))
@@ -223,9 +226,9 @@ class Gui():
                 button.draw(self.canvas) 
             self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
             label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
-            self.canvas.blit(label, (50,500))
+            self.canvas.blit(label, (200,500))
             label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]), 1, BLACK)
-            self.canvas.blit(label, (50,550))
+            self.canvas.blit(label, (200,550))
         elif self.in_chladni:
             for button in self.chladni_buttons:
                 button.draw(self.canvas)
@@ -272,6 +275,14 @@ class Gui():
         
     def ruben_fixed_3(self):
         self.interface.setFreq(750)
+        
+    def switch_volume(self):
+        if self.interface.whichVol() == 'low':
+            self.interface.setVolHigh()
+            self.glass_buttons[7].color = RED
+        else:
+            self.interface.setVolLow()
+            self.glass_buttons[7].color = GREEN
         
     def main_loop(self):
         while not self.done:
