@@ -31,8 +31,8 @@ class Player():
         self.last_val = time_line[-1] + 1
         output_wave = []
         for t in time_line:
-            audio_sine = self.interface.vol  * math.sin(2 * math.pi * freq * t / FS)
-            strobe_sine = self.interface.vol * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
+            audio_sine = self.interface.vol * math.sin(2 * math.pi * freq * t / FS)
+            strobe_sine = 0.5 * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
             output_wave.append([audio_sine, strobe_sine])
         
         return numpy.array(output_wave)
