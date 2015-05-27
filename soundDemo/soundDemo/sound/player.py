@@ -24,6 +24,7 @@ class Player():
         self.player = pyaudio.PyAudio()
         self.is_playing = False
         self.last_val = 0
+        self.vol = self.interface.vol
         
     def createWave(self):
         freq = self.interface.freq
@@ -31,8 +32,10 @@ class Player():
         self.last_val = time_line[-1] + 1
         output_wave = []
         for t in time_line:
-            audio_sine = self.interface.vol * math.sin(2 * math.pi * freq * t / FS)
-            strobe_sine = 0.5 * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
+            if (self.vol != self.interface.vol) and (math.sin(2 * math.pi * freq * t / FS) < 0.02) and (math.sin(2 * math.pi * freq * t / FS) > -0.02):
+                self.vol = self.interface.vol
+            audio_sine = self.vol * math.sin(2 * math.pi * freq * t / FS)
+            strobe_sine = 0. * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
             output_wave.append([audio_sine, strobe_sine])
         
         return numpy.array(output_wave)
