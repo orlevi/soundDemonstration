@@ -30,6 +30,14 @@ class Interface():
     def setVolHigh(self):
         self.vol = HIGH_VOL
         
+    def setVol(self, vol):
+        if vol < 0:
+            self.vol = 0 
+        elif vol > 1:
+            self.vol = 1
+        else:
+            self.vol = vol
+        
     def whichVol(self):
         if self.vol == LOW_VOL:
             return 'low'

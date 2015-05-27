@@ -111,6 +111,51 @@ class Plotter():
         return x_pos
         
 
+class Scroll():
+    
+    def __init__(self, pos_factor, size_factor, drag_func, min_value, color = LIGHT_GRAY):
+        self.pos_factor = pos_factor
+        self.size_factor = size_factor
+        self.drag_function = drag_func
+        self.color = color
+        self.update_layout(WIDTH, HEIGHT)
+        self.is_clicked = False
+        self.click_height = 0
+        self.min_value = min_value * self.size[1]
+        self.height_offset = self.min_value
+        
+    def update_layout(self, width, height):
+        self.position = (self.pos_factor[0] * width, self.pos_factor[1] * height)
+        self.size = (self.size_factor[0] * width, self.size_factor[1] * height)
+        
+    def draw(self, canvas):
+        if self.is_clicked:
+            self.update_scroll_position()
+            self.drag_function(float(self.height_offset / self.size[1]))     
+        pygame.draw.line(canvas, DARK_GRAY, (self.position[0], self.position[1]), (self.position[0], self.position[1] + self.size[1]), 3)
+        pygame.draw.rect(canvas, self.color, (self.position[0] - self.size[0]/2, self.position[1] + 39.0/40*self.size[1] - self.height_offset, self.size[0],self.size[1]/20), 0)
+        
+    def update_scroll_position(self):
+        pos = pygame.mouse.get_pos()
+        self.height_offset = self.click_height - pos[1] + self.min_value
+        if self.height_offset < 0:
+            self.height_offset = 0
+        elif self.height_offset > self.size[1]:
+            self.height_offset = self.size[1]
+
+    def check_click(self, pos):
+        if not self.is_clicked and (pos[0] >= self.position[0]-self.size[0]/2) and (pos[0] <= self.position[0]+self.size[0]/2) and (pos[1] >= self.position[1]+(39.0/40)*self.size[1] - self.min_value) and (pos[1] <= self.position[1]+(41.0/40)*self.size[1] - self.min_value):
+            self.click_height = pos[1]
+            self.is_clicked = True
+              
+    def click_release(self):
+        if self.is_clicked:
+            self.is_clicked = False       
+            self.click_height = 0
+            self.height_offset = self.min_value
+            self.drag_function(float(self.height_offset / self.size[1]))
+            
+
 class Button():
     
     def __init__(self, pos_factor, size_factor, text, press_func = None, release_func = None, color = GRAY):
@@ -133,8 +178,7 @@ class Button():
             self.is_clicked = True
             if self.press_func != None:
                 self.press_func()
-                
-            
+                          
     def click_release(self):
         if self.is_clicked:
             self.is_clicked = False
@@ -179,6 +223,8 @@ class Gui():
         self.sampler = sampler
         self.player = player
         
+        self.is_playing = False
+        
         self.in_glass = True
         self.in_chladni = False
         self.in_ruben = False
@@ -193,8 +239,8 @@ class Gui():
         self.top_buttons.append(Button((1.0/60, 39.0/60),(3.0/60, 15.0/60),"Ruben's Tube", self.set_ruben))
 
               
-        #self.buttons.append(Button((50.0/600,50.0/600),(50.0/600,100.0/600),"Play", self.player.playWave)) # DEBUG, sticky button
-        self.glass_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.player.playWave, self.player.stopWave))
+        self.glass_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave)) # DEBUG, sticky button
+        #self.glass_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.player.playWave, self.player.stopWave))
         self.glass_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
         self.glass_buttons.append(Button((17.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
         self.glass_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"-0.1Hz", self.interface.decreaseFreqFine))
@@ -222,6 +268,8 @@ class Gui():
 
         self.plotter = Plotter((175.0/600,50.0/600), (400.0/600,400.0/600))
         
+        self.volume_scroll = Scroll((25.0/600,50.0/600), (25.0/600,400.0/600), self.interface.setVol, 0.05)
+        
         self.freq_line = []
         self.fft_data = []
         self.fft_peak_data = []
@@ -235,6 +283,7 @@ class Gui():
         self.canvas.fill(GRAY)
         for button in self.top_buttons:
             button.draw(self.canvas) 
+        self.volume_scroll.draw(self.canvas)
         if self.in_glass:
             for button in self.glass_buttons:
                 button.draw(self.canvas) 
@@ -254,6 +303,13 @@ class Gui():
             label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
             self.canvas.blit(label, (50.0/600*self.width,500.0/600*self.height))
         
+    def play_stop_wave(self):
+        if self.is_playing:
+            self.player.stopWave()
+        else:
+            self.player.playWave()
+        self.is_playing = not self.is_playing
+        
     def update_locations(self, size):
         self.width = size[0]
         self.height = size[1]
@@ -266,6 +322,7 @@ class Gui():
         for button in self.ruben_buttons:
             button.update_layout(self.height, self.width)
         self.plotter.update_layout(self.width, self.height)
+        self.volume_scroll.update_layout(self.width, self.height)
 
     def set_freq_from_plotter(self, pos):
         freq = self.plotter.check_click(pos, self.freq_line)
@@ -316,6 +373,7 @@ class Gui():
                 # exit if ESC pressed or 'x' clicked. 
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):     
                     self.sampler.close_pyaudio_nicely()
+                    self.player.close_nicely()
                     self.done = True
                 elif event.type==VIDEORESIZE:
                     self.canvas=pygame.display.set_mode(event.dict['size'],RESIZABLE)
@@ -324,6 +382,7 @@ class Gui():
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == LEFT:
                     for button in self.top_buttons:
                         button.check_click(event.pos)
+                    self.volume_scroll.check_click(event.pos)
                         
                     if self.in_glass:
                         for button in self.glass_buttons:
@@ -339,6 +398,7 @@ class Gui():
                             button.check_click(event.pos)
                 
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == LEFT:
+                    self.volume_scroll.click_release()
                     for button in self.top_buttons:
                         button.click_release()
                     for button in self.glass_buttons:

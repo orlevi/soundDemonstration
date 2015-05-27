@@ -22,6 +22,7 @@ class Player():
         '''
         self.interface = interface       
         self.player = pyaudio.PyAudio()
+        self.is_playing = False
         self.last_val = 0
         
     def createWave(self):
@@ -33,7 +34,6 @@ class Player():
             audio_sine = self.interface.vol * math.sin(2 * math.pi * freq * t / FS) 
             strobe_sine = self.interface.vol * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
             output_wave.append([audio_sine, strobe_sine])
-            #output_wave.append(strobe_sine)
         
         return numpy.array(output_wave)
         
@@ -44,14 +44,19 @@ class Player():
         return (data, pyaudio.paContinue)
 
     def playWave(self):
+        self.is_playing = True
         self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment)
         self.stream.start_stream()
-       
-        
+             
     def stopWave(self):
         self.stream.stop_stream()
         self.stream.close()
         self.last_val = 0
+        self.is_playing = False
+    
+    def close_nicely(self):
+        if self.is_playing:
+            self.stopWave()
         
  
 
