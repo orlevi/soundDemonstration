@@ -4,7 +4,6 @@ parts of the code were taken from http://www.swharden.com/blog/2013-05-09-realti
 """
 __author__ = 'netanel'
 
-import matplotlib.pyplot as plt
 import numpy
 import pyaudio
 import threading
@@ -40,7 +39,7 @@ class Sampler(object):
 
         self._time_sampling_start = None  # hold the time start_microphone_sampling() was called and started to sample microphone
         self._already_started_recording = False
-        self._zero_padding_factor = 15  # number of sample length zeros to add (if we sampled 100 audio points add 100 * self._zero_padding_factor zeros)
+        self._zero_padding_factor = 5  # number of sample length zeros to add (if we sampled 100 audio points add 100 * self._zero_padding_factor zeros)
         self._begin_freq_bin = None
         self._end_frequency_bin = None
 
@@ -158,7 +157,7 @@ class Sampler(object):
         self._xs_buffer = numpy.arange(self._buffer_size) * self._sec_per_point
         self._xs = numpy.arange(self._chunks_to_record * self._buffer_size) * self._sec_per_point
         self._audio = numpy.empty((self._chunks_to_record * self._buffer_size), dtype=NUMPY_DATA_FORMAT)
-        self.change_frequency_range()
+        self.change_frequency_range(min=200, max=1000)
 
     def _record(self):
         """
@@ -235,6 +234,8 @@ class Sampler(object):
 
 
 if __name__ == '__main__':
+    import matplotlib.plt as plt
+    import banana
     plt.ion()
     fig, ax = plt.subplots()
     data, = ax.plot([], [], '.')
