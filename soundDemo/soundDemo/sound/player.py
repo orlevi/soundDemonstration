@@ -13,6 +13,7 @@ import math
 FS = 44100
 CHUNK = 1024
 FREQ_SHIFT = 1
+MAX_VOL_CHANGE = 0.01
 
 class Player():
     '''
@@ -33,7 +34,12 @@ class Player():
         output_wave = []
         for t in time_line:
             if (self.vol != self.interface.vol) and (math.sin(2 * math.pi * freq * t / FS) < 0.02) and (math.sin(2 * math.pi * freq * t / FS) > -0.02):
-                self.vol = self.interface.vol
+                if (self.interface.vol - self.vol) > MAX_VOL_CHANGE:
+                    self.vol = self.vol + MAX_VOL_CHANGE
+                elif (self.interface.vol - self.vol) < -MAX_VOL_CHANGE:
+                    self.vol = self.vol - MAX_VOL_CHANGE
+                else:
+                    self.vol = self.interface.vol
             audio_sine = self.vol * math.sin(2 * math.pi * freq * t / FS)
             strobe_sine = 0. * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
             output_wave.append([audio_sine, strobe_sine])
