@@ -239,15 +239,13 @@ class Gui():
         self.top_buttons.append(Button((1.0/60, 39.0/60),(3.0/60, 15.0/60),"Ruben's Tube", self.set_ruben))
 
               
-        self.glass_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave)) # DEBUG, sticky button
-        #self.glass_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.player.playWave, self.player.stopWave))
+        self.glass_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave)) 
         self.glass_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
         self.glass_buttons.append(Button((17.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
         self.glass_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"-0.1Hz", self.interface.decreaseFreqFine))
         self.glass_buttons.append(Button((29.0/60,5.0/60),(5.0/60,10.0/60),"-1Hz", self.interface.decreaseFreq))
         self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.start_microphone_sampling))
         self.glass_buttons.append(Button((41.0/60,5.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
-        self.glass_buttons.append(Button((47.0/60,5.0/60),(5.0/60,10.0/60),"Volume", self.switch_volume, color = GREEN))
         
         self.chladni_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.player.playWave, self.player.stopWave))
         self.chladni_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
@@ -288,19 +286,19 @@ class Gui():
             for button in self.glass_buttons:
                 button.draw(self.canvas) 
             self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
-            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
+            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq) + " Hz", 1, BLACK)
             self.canvas.blit(label, (200.0/600*self.width,500.0/600*self.height))
-            label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]), 1, BLACK)
+            label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]) + " Hz", 1, BLACK)
             self.canvas.blit(label, (200.0/600*self.width,550.0/600*self.height))
         elif self.in_chladni:
             for button in self.chladni_buttons:
                 button.draw(self.canvas)
-            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
+            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq) + " Hz", 1, BLACK)
             self.canvas.blit(label, (50.0/600*self.width,500.0/600*self.height))
         elif self.in_ruben:
             for button in self.ruben_buttons:
                 button.draw(self.canvas)
-            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq), 1, BLACK)
+            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq) + " Hz", 1, BLACK)
             self.canvas.blit(label, (50.0/600*self.width,500.0/600*self.height))
         
     def play_stop_wave(self):
@@ -358,14 +356,6 @@ class Gui():
         
     def ruben_fixed_3(self):
         self.interface.setFreq(750)
-        
-    def switch_volume(self):
-        if self.interface.whichVol() == 'low':
-            self.interface.setVolHigh()
-            self.glass_buttons[7].color = RED
-        else:
-            self.interface.setVolLow()
-            self.glass_buttons[7].color = GREEN
         
     def main_loop(self):
         while not self.done:

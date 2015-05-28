@@ -41,7 +41,7 @@ class Player():
                 else:
                     self.vol = self.interface.vol
             audio_sine = self.vol * math.sin(2 * math.pi * freq * t / FS)
-            strobe_sine = 0. * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
+            strobe_sine = 0.5 * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
             output_wave.append([audio_sine, strobe_sine])
         
         return numpy.array(output_wave)

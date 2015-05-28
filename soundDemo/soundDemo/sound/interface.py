@@ -24,12 +24,6 @@ class Interface():
     def decreaseVol(self):
         self.vol -=1
         
-    def setVolLow(self):
-        self.vol = LOW_VOL
-        
-    def setVolHigh(self):
-        self.vol = HIGH_VOL
-        
     def setVol(self, vol):
         if vol < 0:
             self.vol = 0 
