@@ -13,8 +13,8 @@ import math
 FS = 44100
 CHUNK = 1024
 FREQ_SHIFT = 1
-MAX_VALUE_TO_ALLOW_CHANGE = 0.025
-MAX_VOL_CHANGE = 0.01
+MIN_VALUE_TO_ALLOW_CHANGE = 0.98
+MAX_VOL_CHANGE = 0.001
 
 class Player():
     '''
@@ -30,22 +30,29 @@ class Player():
         self.freq = self.interface.freq
         
     def createWave(self):
-        time_line = [t + self.last_val for t in range(CHUNK)]
-        self.last_val = time_line[-1] + 1
+        t = self.last_val
         output_wave = []
-        for t in time_line:
-            if (self.vol != self.interface.vol) and (math.fabs(math.sin(2 * math.pi * self.freq * t / FS)) < MAX_VALUE_TO_ALLOW_CHANGE):
+        for i in range(CHUNK):
+            t = t + 1
+            
+            if (math.fabs(self.freq - self.interface.freq) >= 0.1) and (math.fabs(math.sin(2 * math.pi * self.freq * t / FS)) > MIN_VALUE_TO_ALLOW_CHANGE) :
+                print "freq change , self- " + str(self.freq) + " , interface- " + str(self.interface.freq)
+                t = int(t * self.freq / self.interface.freq)
+                self.freq = self.interface.freq
+              
+            if (self.vol != self.interface.vol):
                 if (self.interface.vol - self.vol) > MAX_VOL_CHANGE:
                     self.vol = self.vol + MAX_VOL_CHANGE
                 elif (self.interface.vol - self.vol) < -MAX_VOL_CHANGE:
                     self.vol = self.vol - MAX_VOL_CHANGE
                 else:
                     self.vol = self.interface.vol
-            if (self.freq != self.interface.freq) and (math.fabs(math.sin(2 * math.pi * self.freq * t / FS)) < MAX_VALUE_TO_ALLOW_CHANGE) and (math.fabs(math.sin(2 * math.pi * self.interface.freq * t / FS)) < MAX_VALUE_TO_ALLOW_CHANGE):
-                self.freq = self.interface.freq
+            
             audio_sine = self.vol * math.sin(2 * math.pi * self.freq * t / FS)
-            strobe_sine = 0.5 * math.sin(2 * math.pi * (self.freq + FREQ_SHIFT) * t / FS)
+            strobe_sine = 0.0 * math.sin(2 * math.pi * (self.freq + FREQ_SHIFT) * t / FS)
             output_wave.append([audio_sine, strobe_sine])
+        
+        self.last_val = t
         
         return numpy.array(output_wave)
         

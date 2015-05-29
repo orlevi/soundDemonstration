@@ -229,6 +229,8 @@ class Gui():
         self.in_chladni = False
         self.in_ruben = False
         
+        self.time=0#####################################################################################################################S
+        
         self.top_buttons = []
         self.glass_buttons = []
         self.chladni_buttons = []
@@ -389,7 +391,12 @@ class Gui():
                                    
             self.draw()         
             pygame.display.update()
-            self.fps_Clock.tick(60)
+            ms = self.fps_Clock.tick(60)
+            
+            self.time = self.time + (ms/1000.0)
+            if self.time > 1:
+                self.time = self.time - 1
+                print self.fps_Clock.get_fps()
             
             
             
