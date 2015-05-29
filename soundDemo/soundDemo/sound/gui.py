@@ -113,7 +113,7 @@ class Plotter():
 
 class Scroll():
     
-    def __init__(self, pos_factor, size_factor, drag_func, min_value, color = LIGHT_GRAY):
+    def __init__(self, pos_factor, size_factor, drag_func, untouched_factor, color = LIGHT_GRAY):
         self.pos_factor = pos_factor
         self.size_factor = size_factor
         self.drag_function = drag_func
@@ -121,8 +121,8 @@ class Scroll():
         self.update_layout(WIDTH, HEIGHT)
         self.is_clicked = False
         self.click_height = 0
-        self.min_value = min_value * self.size[1]
-        self.height_offset = self.min_value
+        self.untouched_value = untouched_factor * self.size[1]
+        self.height_offset = self.untouched_value
         
     def update_layout(self, width, height):
         self.position = (self.pos_factor[0] * width, self.pos_factor[1] * height)
@@ -137,14 +137,14 @@ class Scroll():
         
     def update_scroll_position(self):
         pos = pygame.mouse.get_pos()
-        self.height_offset = self.click_height - pos[1] + self.min_value
+        self.height_offset = self.click_height - pos[1] + self.untouched_value
         if self.height_offset < 0:
             self.height_offset = 0
         elif self.height_offset > self.size[1]:
             self.height_offset = self.size[1]
 
     def check_click(self, pos):
-        if not self.is_clicked and (pos[0] >= self.position[0]-self.size[0]/2) and (pos[0] <= self.position[0]+self.size[0]/2) and (pos[1] >= self.position[1]+(39.0/40)*self.size[1] - self.min_value) and (pos[1] <= self.position[1]+(41.0/40)*self.size[1] - self.min_value):
+        if not self.is_clicked and (pos[0] >= self.position[0]-self.size[0]/2) and (pos[0] <= self.position[0]+self.size[0]/2) and (pos[1] >= self.position[1]+(39.0/40)*self.size[1] - self.untouched_value) and (pos[1] <= self.position[1]+(41.0/40)*self.size[1] - self.untouched_value):
             self.click_height = pos[1]
             self.is_clicked = True
               
@@ -152,7 +152,7 @@ class Scroll():
         if self.is_clicked:
             self.is_clicked = False       
             self.click_height = 0
-            self.height_offset = self.min_value
+            self.height_offset = self.untouched_value
             self.drag_function(float(self.height_offset / self.size[1]))
             
 
@@ -238,28 +238,18 @@ class Gui():
         self.top_buttons.append(Button((1.0/60, 22.0/60),(3.0/60, 15.0/60),"Chladni Plate", self.set_chladni))
         self.top_buttons.append(Button((1.0/60, 39.0/60),(3.0/60, 15.0/60),"Ruben's Tube", self.set_ruben))
 
+        self.top_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave)) 
+        self.top_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
+        self.top_buttons.append(Button((17.0/60,5.0/60),(5.0/60,10.0/60),"-1Hz", self.interface.decreaseFreq))
+        self.top_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
+        self.top_buttons.append(Button((29.0/60,5.0/60),(5.0/60,10.0/60),"-0.1Hz", self.interface.decreaseFreqFine))
               
-        self.glass_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave)) 
-        self.glass_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
-        self.glass_buttons.append(Button((17.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
-        self.glass_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"-0.1Hz", self.interface.decreaseFreqFine))
-        self.glass_buttons.append(Button((29.0/60,5.0/60),(5.0/60,10.0/60),"-1Hz", self.interface.decreaseFreq))
         self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.start_microphone_sampling))
         self.glass_buttons.append(Button((41.0/60,5.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
         
-        self.chladni_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.player.playWave, self.player.stopWave))
-        self.chladni_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
-        self.chladni_buttons.append(Button((17.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
-        self.chladni_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"-0.1Hz", self.interface.decreaseFreqFine))
-        self.chladni_buttons.append(Button((29.0/60,5.0/60),(5.0/60,10.0/60),"-1Hz", self.interface.decreaseFreq))
         self.chladni_buttons.append(Button((5.0/60,17.0/60),(15.0/60,33.0/60),"Chladni fixed freq I", self.chladni_fixed_1))
         self.chladni_buttons.append(Button((22.0/60,17.0/60),(15.0/60,33.0/60),"Chladni fixed freq II", self.chladni_fixed_2))
         
-        self.ruben_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.player.playWave, self.player.stopWave))
-        self.ruben_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
-        self.ruben_buttons.append(Button((17.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
-        self.ruben_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"-0.1Hz", self.interface.decreaseFreqFine))
-        self.ruben_buttons.append(Button((29.0/60,5.0/60),(5.0/60,10.0/60),"-1Hz", self.interface.decreaseFreq))
         self.ruben_buttons.append(Button((5.0/60,17.0/60),(12.0/60,33.0/60),"Rubn's tube fixed freq I", self.ruben_fixed_1))
         self.ruben_buttons.append(Button((19.0/60,17.0/60),(12.0/60,33.0/60),"Rubn's tube fixed freq II", self.ruben_fixed_2))
         self.ruben_buttons.append(Button((33.0/60,17.0/60),(12.0/60,33.0/60),"Rubn's tube fixed freq III", self.ruben_fixed_3))
@@ -275,6 +265,8 @@ class Gui():
         self.main_loop()                                        # start the main loop of the gui
     
     def draw(self):
+        freq_label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq) + " Hz", 1, BLACK)
+        first_peak_label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]) + " Hz", 1, BLACK)
         if self.sampler.has_new_fft():
             self.freq_line, self.fft_data = self.sampler.get_fft_data()
             self.freq_line, self.fft_peak_data = self.sampler.get_peak_waveform()
@@ -286,20 +278,16 @@ class Gui():
             for button in self.glass_buttons:
                 button.draw(self.canvas) 
             self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
-            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq) + " Hz", 1, BLACK)
-            self.canvas.blit(label, (200.0/600*self.width,500.0/600*self.height))
-            label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]) + " Hz", 1, BLACK)
-            self.canvas.blit(label, (200.0/600*self.width,550.0/600*self.height))
+            self.canvas.blit(freq_label, (200.0/600*self.width,500.0/600*self.height))
+            self.canvas.blit(first_peak_label, (200.0/600*self.width,550.0/600*self.height))
         elif self.in_chladni:
             for button in self.chladni_buttons:
                 button.draw(self.canvas)
-            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq) + " Hz", 1, BLACK)
-            self.canvas.blit(label, (50.0/600*self.width,500.0/600*self.height))
+            self.canvas.blit(freq_label, (50.0/600*self.width,500.0/600*self.height))
         elif self.in_ruben:
             for button in self.ruben_buttons:
                 button.draw(self.canvas)
-            label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq) + " Hz", 1, BLACK)
-            self.canvas.blit(label, (50.0/600*self.width,500.0/600*self.height))
+            self.canvas.blit(freq_label, (50.0/600*self.width,500.0/600*self.height))
         
     def play_stop_wave(self):
         if self.is_playing:
