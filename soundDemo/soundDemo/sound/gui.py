@@ -41,9 +41,9 @@ class Plotter():
     def draw(self, canvas, freq, x_data, y_data_1, y_data_2 = []):
         self.draw_frame(canvas)
         self.draw_freq_marker(canvas, freq, x_data)
-        self.draw_graphs(canvas, x_data, y_data_1, y_data_2)
-        self.draw_labels(canvas, x_data)
-        self.draw_ticks(canvas)
+        #self.draw_graphs(canvas, x_data, y_data_1, y_data_2)
+        #self.draw_labels(canvas, x_data)
+        #self.draw_ticks(canvas)
     
     def draw_freq_marker(self, canvas, freq, x_data):
         if x_data != []:

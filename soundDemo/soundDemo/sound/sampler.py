@@ -36,6 +36,7 @@ class Sampler(object):
 
         self._fft_frequencies = None
         self._audio = None  # hold recorded audio
+        self._audio_lock = threading.RLock()
 
         self._time_sampling_start = None  # hold the time start_microphone_sampling() was called and started to sample microphone
         self._already_started_recording = False
@@ -171,7 +172,8 @@ class Sampler(object):
         while not self._stop_recording_thread:
             if not self._new_audio:
                 for i in range(self._chunks_to_record):
-                    self._audio[i * self._buffer_size: (i+1) * self._buffer_size] = self._get_audio()
+                    with self._audio_lock:
+                        self._audio[i * self._buffer_size: (i+1) * self._buffer_size] = self._get_audio()
                 #logging.debug("read new audio data, {}".format(time.clock()))
                 self._new_audio = True
                 t = time.clock()
@@ -210,7 +212,8 @@ class Sampler(object):
         :return:
         """
 
-        data = self._audio
+        with self._audio_lock:
+            data = numpy.copy(self._audio)
         if self._first:
             logging.debug("data length without padding {}".format(len(data)))
         data = numpy.concatenate((data, numpy.zeros([self._zero_padding_factor * len(data)])), 0)

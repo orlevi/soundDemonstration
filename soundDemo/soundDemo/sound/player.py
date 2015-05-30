@@ -3,6 +3,7 @@ Created on May 13 2015
 
 @author: Or Levi
 '''
+#from reportlab.graphics.charts.piecharts import PL
 import interface
 import pyaudio
 import time
@@ -58,6 +59,8 @@ class Player():
         
             
     def nextSegment(self, in_data, frame_count, time_info, status):
+        if status:
+            print ('playback error %s' % status)
         chunk = self.createWave()
         data = chunk.astype(numpy.float32).tostring()
         return (data, pyaudio.paContinue)
@@ -78,8 +81,27 @@ class Player():
             self.stopWave()
         
  
+if __name__ == '__main__':
 
+    import sampler
+    i = interface.Interface(frequency=760)
+    s = sampler.Sampler()
+    p = Player(interface=i)
+    p.playWave()
+    s.start_microphone_sampling()
+    test_time = 60
+    t0 = tc = time.clock()
 
+    while tc - t0 < test_time:
+        a = s.get_peak_fft()
+        s.get_fft_data()
+        tc= time.clock()
+
+        time.sleep(1/60)
+
+    p.close_nicely()
+    s.close_pyaudio_nicely()
+    time.sleep(1)
 
 
 
