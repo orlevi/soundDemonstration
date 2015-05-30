@@ -3,7 +3,6 @@ Created on May 13 2015
 
 @author: Or Levi
 '''
-#from reportlab.graphics.charts.piecharts import PL
 import interface
 import pyaudio
 import time
@@ -17,20 +16,21 @@ FREQ_SHIFT = 1
 MIN_VALUE_TO_ALLOW_CHANGE = 0.98
 MAX_VOL_CHANGE = 0.001
 
-class Player():
+class Player(object):
     '''
     '''
-    def __init__(self, interface):
+    def __init__(self, interface, pa):
         '''
         '''
         self.interface = interface       
-        self.player = pyaudio.PyAudio()
+        self.player = pa
         self.is_playing = False
         self.last_val = 0
         self.vol = self.interface.vol
         self.freq = self.interface.freq
         
     def createWave(self):
+
         t = self.last_val
         output_wave = []
         for i in range(CHUNK):
@@ -54,7 +54,16 @@ class Player():
             output_wave.append([audio_sine, strobe_sine])
         
         self.last_val = t
-        
+        '''
+        freq = self.interface.freq
+        time_line = [t +self.last_val for t in xrange(CHUNK)]
+        self.last_val = time_line[-1] + 1
+        output_wave = []
+        for t in time_line:
+            audio_sine = self.interface.vol * math.sin(2 * math.pi * freq * t / FS)
+            strobe_sine = 0.0 * math.sin(2 * math.pi * (freq + FREQ_SHIFT) * t / FS)
+            output_wave.append([audio_sine, strobe_sine])
+        '''
         return numpy.array(output_wave)
         
             
@@ -67,7 +76,7 @@ class Player():
 
     def playWave(self):
         self.is_playing = True
-        self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment)
+        self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment, frames_per_buffer=CHUNK)
         self.stream.start_stream()
              
     def stopWave(self):
@@ -84,34 +93,37 @@ class Player():
 if __name__ == '__main__':
 
     import sampler
+    import random
+    pa = pyaudio.PyAudio()
     i = interface.Interface(frequency=760)
-    s = sampler.Sampler()
-    p = Player(interface=i)
+    #s = sampler.Sampler(pa=pa)
+    time.sleep(1)
+    p = Player(interface=i, pa=pa)
     p.playWave()
-    s.start_microphone_sampling()
-    test_time = 60
-    t0 = tc = time.clock()
+    #s.start_microphone_sampling()
+    test_time = 60*30
+    t0 = tc = tf = tv = time.clock()
 
     while tc - t0 < test_time:
-        a = s.get_peak_fft()
-        s.get_fft_data()
-        tc= time.clock()
+        #a = s.get_peak_fft()
+        #s.get_fft_data()
+        if tc - tf > 15:
+            #s.reset_max_fft()
+            #print 'peak freq {}'.format(a)
+            new_freq = random.randint(300, 800)
+            print 'setting freq {}'.format(new_freq)
+            i.setFreq(freq=new_freq)
+            tf = time.clock()
+
+        if tc - tv > 3:
+            new_vol = random.random()
+            print 'setting vol {}'.format(new_vol)
+            i.setVol(new_vol)
+            tv = time.clock()
 
         time.sleep(1/60)
+        tc = time.clock()
 
     p.close_nicely()
-    s.close_pyaudio_nicely()
+    #s.close_pyaudio_nicely()
     time.sleep(1)
-
-
-
-
-    
-
-
-
-
-
-
-
-    

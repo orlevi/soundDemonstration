@@ -19,7 +19,7 @@ TIME_TO_RECORD = 0.26  # time to record before calculating fft
 
 
 class Sampler(object):
-    def __init__(self, microphone_sampling_time=60*60):
+    def __init__(self, pa, microphone_sampling_time=60*60):
         self._microphone_sampling_time = microphone_sampling_time
         self._peakFFT = (0, 0)
         self._stop_recording_thread = False  # flag to kill recorder and fft computer threads
@@ -27,6 +27,7 @@ class Sampler(object):
         self._new_fft = False
         self._peak_waveform = None
 
+        self._p = pa
         self._bitrate = BITRATE
         self._buffer_size = PYAUDIO_BUFFER_SIZE
         self._sec_to_record = TIME_TO_RECORD
@@ -151,7 +152,7 @@ class Sampler(object):
         self._chunks_to_record = int(self._samples_to_record / self._buffer_size)
         self._sec_per_point = 1.0 / self._bitrate
 
-        self._p = pyaudio.PyAudio()
+        #self._p = pyaudio.PyAudio()
         logging.debug("opening audio stream")
 
         self._inStream = self._p.open(format=PYAUDIO_FORMAT, channels=1, rate=self._bitrate, input=True, frames_per_buffer=self._buffer_size)

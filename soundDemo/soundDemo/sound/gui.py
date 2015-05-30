@@ -246,8 +246,8 @@ class Gui():
         self.top_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
         self.top_buttons.append(Button((29.0/60,5.0/60),(5.0/60,10.0/60),"-0.1Hz", self.interface.decreaseFreqFine))
               
-        self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.start_microphone_sampling))
-        self.glass_buttons.append(Button((41.0/60,5.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
+        #self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.start_microphone_sampling))
+        #self.glass_buttons.append(Button((41.0/60,5.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
         
         self.chladni_buttons.append(Button((5.0/60,17.0/60),(15.0/60,33.0/60),"Chladni fixed freq I", self.chladni_fixed_1))
         self.chladni_buttons.append(Button((22.0/60,17.0/60),(15.0/60,33.0/60),"Chladni fixed freq II", self.chladni_fixed_2))
@@ -268,10 +268,10 @@ class Gui():
     
     def draw(self):
         freq_label = self.font.render("Current Freq  - "+"{0:.1f}".format(self.interface.freq) + " Hz", 1, BLACK)
-        first_peak_label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]) + " Hz", 1, BLACK)
-        if self.sampler.has_new_fft():
-            self.freq_line, self.fft_data = self.sampler.get_fft_data()
-            self.freq_line, self.fft_peak_data = self.sampler.get_peak_waveform()
+        #first_peak_label = self.font.render("Peak FFT Freq - "+"{0:.1f}".format(self.sampler.get_peak_fft()[0]) + " Hz", 1, BLACK)
+        #if self.sampler.has_new_fft():
+        #    self.freq_line, self.fft_data = self.sampler.get_fft_data()
+        #    self.freq_line, self.fft_peak_data = self.sampler.get_peak_waveform()
         self.canvas.fill(GRAY)
         for button in self.top_buttons:
             button.draw(self.canvas) 
@@ -279,9 +279,9 @@ class Gui():
         if self.in_glass:
             for button in self.glass_buttons:
                 button.draw(self.canvas) 
-            self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
+            #self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
             self.canvas.blit(freq_label, (200.0/600*self.width,500.0/600*self.height))
-            self.canvas.blit(first_peak_label, (200.0/600*self.width,550.0/600*self.height))
+            #self.canvas.blit(first_peak_label, (200.0/600*self.width,550.0/600*self.height))
         elif self.in_chladni:
             for button in self.chladni_buttons:
                 button.draw(self.canvas)
