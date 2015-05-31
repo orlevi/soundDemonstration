@@ -96,20 +96,20 @@ if __name__ == '__main__':
     import random
     pa = pyaudio.PyAudio()
     i = interface.Interface(frequency=760)
-    #s = sampler.Sampler(pa=pa)
+    s = sampler.Sampler(pa=pa)
     time.sleep(1)
     p = Player(interface=i, pa=pa)
     p.playWave()
-    #s.start_microphone_sampling()
+    s.start_microphone_sampling()
     test_time = 60*30
     t0 = tc = tf = tv = time.clock()
 
     while tc - t0 < test_time:
-        #a = s.get_peak_fft()
-        #s.get_fft_data()
+        a = s.get_peak_fft()
+        s.get_fft_data()
         if tc - tf > 15:
-            #s.reset_max_fft()
-            #print 'peak freq {}'.format(a)
+            s.reset_max_fft()
+            print 'peak freq {}'.format(a)
             new_freq = random.randint(300, 800)
             print 'setting freq {}'.format(new_freq)
             i.setFreq(freq=new_freq)
@@ -125,5 +125,5 @@ if __name__ == '__main__':
         tc = time.clock()
 
     p.close_nicely()
-    #s.close_pyaudio_nicely()
+    s.close_pyaudio_nicely()
     time.sleep(1)
