@@ -9,6 +9,7 @@ import pyaudio
 import threading
 import time
 import logging
+import config as config
 
 ################# Global Consts
 BITRATE = 44100
@@ -20,7 +21,6 @@ TIME_TO_RECORD = 0.26  # time to record before calculating fft
 
 class Sampler(object):
     def __init__(self, microphone_sampling_time=60*60):
-        self._microphone_sampling_time = microphone_sampling_time
         self._peakFFT = (0, 0)
         self._stop_recording_thread = False  # flag to kill recorder and fft computer threads
         self._new_audio = False  # flag to inform about new audio data from recorder thread
@@ -157,7 +157,7 @@ class Sampler(object):
         self._xs_buffer = numpy.arange(self._buffer_size) * self._sec_per_point
         self._xs = numpy.arange(self._chunks_to_record * self._buffer_size) * self._sec_per_point
         self._audio = numpy.empty((self._chunks_to_record * self._buffer_size), dtype=NUMPY_DATA_FORMAT)
-        self.change_frequency_range(min=200, max=1000)
+        self.change_frequency_range(min=config.MIN_USED_FREQUENCY, max=config.MAX_USED_FREQUENCY)
 
     def _record(self):
         """
@@ -174,9 +174,6 @@ class Sampler(object):
                     self._audio[i * self._buffer_size: (i+1) * self._buffer_size] = self._get_audio()
                 #logging.debug("read new audio data, {}".format(time.clock()))
                 self._new_audio = True
-                t = time.clock()
-                if t - self._time_sampling_start > self._microphone_sampling_time:
-                    self._stop_recording_thread = True
 
             time.sleep(0.01)
         logging.debug("ended recorder thread")
