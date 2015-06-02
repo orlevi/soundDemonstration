@@ -21,7 +21,7 @@ TIME_TO_RECORD = 0.26  # time to record before calculating fft
 
 class Sampler(object):
     def __init__(self, microphone_sampling_time=60*60):
-        self._peakFFT = (0, 0)
+        self._peakFFT = ([0, 0], [0, 0])
         self._stop_recording_thread = False  # flag to kill recorder and fft computer threads
         self._new_audio = False  # flag to inform about new audio data from recorder thread
         self._new_fft = False
@@ -72,7 +72,7 @@ class Sampler(object):
         return self._peakFFT
 
     def reset_max_fft(self):
-        self._peakFFT = (0, 0)
+        self._peakFFT = ([0, 0], [0, 0])
         self._peak_waveform = numpy.zeros(len(self._fft_frequencies))
 
     def get_peak_waveform(self):
@@ -219,20 +219,32 @@ class Sampler(object):
         ys = ys[self._begin_freq_bin:self._end_frequency_bin]
         if log_scale:
             ys = 20 * numpy.log10(ys)
-        max_p = ys.argmax()
-        max_val = ys[max_p]
 
+        self._find_maximas(ys)
         # check if we have a value greater than self._peakFFT
-        if max_val > self._peakFFT[1]:
-            self._peakFFT = (self._fft_frequencies[max_p], max_val)
-            self._peak_waveform = ys
         self._fft_data = ys
         self._new_fft = True
 
+    def _find_maximas(self, fft_values):
+        # find firs maxima
+        max_p = fft_values.argmax()
+        max_val = fft_values[max_p]
+
+        if max_val > self._peakFFT[1][0]:
+            # calculate new vector, exclude the area of the old maxima
+            fft_resolution = self._fft_frequencies[1] - self._fft_frequencies[0]
+            delta_bins = int(config.DELTA_FREQ_FOR_MAXIMA / fft_resolution)
+
+            excluded_fft_values = numpy.concatenate((fft_values[:(max_p-delta_bins)], numpy.zeros(delta_bins*2), fft_values[(max_p+delta_bins):]))
+            max_p2 = excluded_fft_values.argmax()
+            max_val2 = excluded_fft_values[max_p2]
+
+            self._peak_waveform = fft_values
+            self._peakFFT = ([self._fft_frequencies[max_p], self._fft_frequencies[max_p2]], [max_val, max_val2])
+
 
 if __name__ == '__main__':
-    import matplotlib.plt as plt
-    import banana
+    import matplotlib.pyplot as plt
     plt.ion()
     fig, ax = plt.subplots()
     data, = ax.plot([], [], '.')
@@ -247,7 +259,7 @@ if __name__ == '__main__':
     ax.set_ylabel('power [Log]')
 
     # create Sampler object
-    s = Sampler(microphone_sampling_time=20)
+    s = Sampler(microphone_sampling_time=60)
     s.change_frequency_range(200, 1000)
     # when wanted, call start_microphone_sampling()
     s.start_microphone_sampling()
@@ -262,6 +274,7 @@ if __name__ == '__main__':
                     logging.debug('data size, x: {}, y: {}, '.format(len(x), len(y)))
                     first = False
                 a, b = s.get_peak_fft()
+                print 'max fft20 {},{}'.format(a, b)
                 x1, y1 = s.get_peak_waveform()
                 data.set_xdata(x)
                 data.set_ydata(y)
