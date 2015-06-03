@@ -64,7 +64,7 @@ class Player():
 
     def playWave(self):
         self.is_playing = True
-        self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment)
+        self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment, frames_per_buffer = CHUNK)
         self.stream.start_stream()
              
     def stopWave(self):
