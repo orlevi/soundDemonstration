@@ -4,6 +4,7 @@ Created on May 11 2015
 @author: Or Levi
 '''
 import pygame
+import config as config
 from pygame.locals import *
 
 
@@ -113,7 +114,7 @@ class Plotter():
 
 class Scroll():
     
-    def __init__(self, pos_factor, size_factor, drag_func, untouched_factor, max_value = 1, color = LIGHT_GRAY):
+    def __init__(self, pos_factor, size_factor, drag_func, untouched_factor = 0, max_value = 1, color = LIGHT_GRAY):
         self.pos_factor = pos_factor
         self.size_factor = size_factor
         self.drag_function = drag_func
@@ -266,7 +267,7 @@ class Gui():
 
         self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
         
-        self.volume_scroll = Scroll((25.0/600,50.0/600), (25.0/600,400.0/600), self.interface.setVol, 0.05)
+        self.volume_scroll = Scroll((25.0/600,50.0/600), (25.0/600,400.0/600), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
         
         self.freq_line = []
         self.fft_data = []
