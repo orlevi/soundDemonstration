@@ -235,7 +235,9 @@ class Sampler(object):
             fft_resolution = self._fft_frequencies[1] - self._fft_frequencies[0]
             delta_bins = int(config.DELTA_FREQ_FOR_MAXIMA / fft_resolution)
 
-            excluded_fft_values = numpy.concatenate((fft_values[:(max_p-delta_bins)], numpy.zeros(delta_bins*2), fft_values[(max_p+delta_bins):]))
+            min = max_p - delta_bins if max_p - delta_bins >= 0 else 0
+            max = max_p + delta_bins if max_p + delta_bins < len(fft_values) else len(fft_values) - 1
+            excluded_fft_values = numpy.concatenate((fft_values[:min], numpy.zeros(delta_bins*2), fft_values[max:]))
             max_p2 = excluded_fft_values.argmax()
             max_val2 = excluded_fft_values[max_p2]
 
@@ -260,7 +262,7 @@ if __name__ == '__main__':
 
     # create Sampler object
     s = Sampler(microphone_sampling_time=60)
-    s.change_frequency_range(200, 1000)
+    s.change_frequency_range(340, 1000)
     # when wanted, call start_microphone_sampling()
     s.start_microphone_sampling()
     first = True
@@ -276,6 +278,8 @@ if __name__ == '__main__':
                 a, b = s.get_peak_fft()
                 print 'max fft20 {},{}'.format(a, b)
                 x1, y1 = s.get_peak_waveform()
+                if abs(a[0] - a[1]) < config.DELTA_FREQ_FOR_MAXIMA:
+                    print 'smaller: {},{}'.format(a[0], a[1])
                 data.set_xdata(x)
                 data.set_ydata(y)
                 data2.set_xdata(a)
@@ -288,6 +292,7 @@ if __name__ == '__main__':
                 ax.autoscale_view()
                 fig.canvas.draw()
                 fig.canvas.flush_events()
+                s.reset_max_fft()
             except Exception:
                 pass
         fig.canvas.draw()
