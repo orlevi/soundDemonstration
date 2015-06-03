@@ -47,9 +47,9 @@ class Plotter():
         self.draw_ticks(canvas)
     
     def draw_freq_marker(self, canvas, freq, x_data):
-        if x_data != []:
+        if x_data != [] and freq >= x_data[0] and freq <= x_data[-1]:
             x_pos = (float(freq - x_data[0]) / (x_data[-1] - x_data[0])) * self.size[0]
-            pygame.draw.line(canvas, RED, (self.position[0] + x_pos, self.position[1] + self.size[1]-1), (self.position[0] + x_pos, self.position[1]), 3)   
+            pygame.draw.line(canvas, RED, (self.position[0] + x_pos, self.position[1] + self.size[1]-1), (self.position[0] + x_pos, self.position[1]), 2)   
 
     
     def draw_frame(self, canvas):
