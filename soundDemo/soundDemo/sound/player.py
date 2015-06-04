@@ -8,6 +8,7 @@ import pyaudio
 import time
 import numpy
 import math
+import threading
 
 
 FS = 44100
@@ -63,10 +64,22 @@ class Player():
         return (data, pyaudio.paContinue)
 
     def playWave(self):
+
         self.is_playing = True
-        self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment, frames_per_buffer = CHUNK)
-        self.stream.start_stream()
-             
+
+        self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, frames_per_buffer = CHUNK)
+        #self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment, frames_per_buffer = CHUNK)
+        #self.stream.start_stream()
+        t = threading.Thread(target=self.player_t)
+        t.start()
+
+    def player_t(self):
+        while self.is_playing:
+            chunk = self.createWave()
+            data = chunk.astype(numpy.float32).tostring()
+            self.stream.write(data)
+
+
     def stopWave(self):
         self.stream.stop_stream()
         self.stream.close()
