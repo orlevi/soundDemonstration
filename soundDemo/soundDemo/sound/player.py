@@ -29,6 +29,9 @@ class Player():
         self.last_val = 0
         self.vol = self.interface.vol
         self.freq = self.interface.freq
+        self.chunk = None
+        self.need_chunk = True
+        self.has_chunk = False
         
     def createWave(self):
         t = self.last_val
@@ -70,14 +73,25 @@ class Player():
         self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, frames_per_buffer = CHUNK)
         #self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment, frames_per_buffer = CHUNK)
         #self.stream.start_stream()
+        creator_t = threading.Thread(target=self.create_chunk)
+        creator_t.start()
         t = threading.Thread(target=self.player_t)
         t.start()
 
     def player_t(self):
         while self.is_playing:
-            chunk = self.createWave()
-            data = chunk.astype(numpy.float32).tostring()
-            self.stream.write(data)
+            if self.has_chunk:
+                a = self.chunk
+                self.has_chunk = False
+                #print a
+                self.stream.write(a)
+
+    def create_chunk(self):
+        while self.is_playing:
+            if not self.has_chunk:
+                chunk = self.createWave()
+                self.chunk = chunk.astype(numpy.float32).tostring()
+                self.has_chunk = True
 
 
     def stopWave(self):
