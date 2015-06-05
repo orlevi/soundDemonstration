@@ -350,19 +350,19 @@ class Gui():
         self.in_ruben = True 
         
     def chladni_fixed_1(self):
-        self.interface.setFreq(350)
+        self.interface.setFreq(config.CHLADNI_FIXED_1)
 
     def chladni_fixed_2(self):
-        self.interface.setFreq(450)
+        self.interface.setFreq(config.CHLADNI_FIXED_2)
       
     def ruben_fixed_1(self):
-        self.interface.setFreq(550) 
+        self.interface.setFreq(config.TUBE_FIXED_1) 
          
     def ruben_fixed_2(self):
-        self.interface.setFreq(650)
+        self.interface.setFreq(config.TUBE_FIXED_2)
         
     def ruben_fixed_3(self):
-        self.interface.setFreq(750)
+        self.interface.setFreq(config.TUBE_FIXED_3)
         
     def main_loop(self):
         while not self.done:
@@ -372,10 +372,14 @@ class Gui():
                     self.sampler.close_pyaudio_nicely()
                     self.player.close_nicely()
                     self.done = True
+                
+                # change window size event
                 elif event.type==VIDEORESIZE:
                     self.canvas=pygame.display.set_mode(event.dict['size'],RESIZABLE)
                     pygame.display.flip()
                     self.update_locations(event.dict['size'])
+                
+                # left mouse button clicked events
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == LEFT:
                     for button in self.top_buttons:
                         button.check_click(event.pos)
@@ -394,6 +398,7 @@ class Gui():
                         for button in self.ruben_buttons:
                             button.check_click(event.pos)
                 
+                # left mouse button released events
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == LEFT:
                     self.volume_scroll.click_release()
                     for button in self.top_buttons:
@@ -405,6 +410,16 @@ class Gui():
                     for button in self.ruben_buttons:
                         button.click_release()
                         
+                # keyboard keys events
+                elif event.type == KEYDOWN: 
+                    if event.key == K_LEFT:
+                        self.interface.decreaseFreqFine()
+                    elif event.key == K_RIGHT:
+                        self.interface.increaseFreqFine()
+                    elif event.key == K_UP:
+                        print "up"
+                    elif event.key == K_DOWN:
+                        print "down"
                                    
             self.draw()         
             pygame.display.update()
