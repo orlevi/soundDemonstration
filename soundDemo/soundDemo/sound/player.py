@@ -10,6 +10,7 @@ import time
 import numpy
 import math
 import threading
+import Queue
 
 
 FS = 44100
@@ -33,7 +34,8 @@ class Player():
         self.chunk = None
         self.need_chunk = True
         self.has_chunk = False
-        
+        self.chunk_queue = Queue.Queue(maxsize=5)
+
     def createWave(self):
         t = self.last_val
         output_wave = []
@@ -83,17 +85,16 @@ class Player():
 
     def play_chunk(self):
         while self.is_playing:
-            if self.has_chunk:
-                a = self.chunk
-                self.has_chunk = False
+            if self.chunk_queue.qsize() > 0:
+                a = self.chunk_queue.get_nowait()
                 self.stream.write(a)
 
     def create_chunk(self):
         while self.is_playing:
-            if not self.has_chunk:
+            if self.chunk_queue.qsize() < 5:
                 chunk = self.createWave()
-                self.chunk = chunk.astype(numpy.float32).tostring()
-                self.has_chunk = True
+                chunk = chunk.astype(numpy.float32).tostring()
+                self.chunk_queue.put_nowait(chunk)
 
 
     def stopWave(self):
