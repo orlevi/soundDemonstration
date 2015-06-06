@@ -18,6 +18,8 @@ CHUNK = 1024
 FREQ_SHIFT = 1
 MIN_VALUE_TO_ALLOW_CHANGE = 0.98
 MAX_VOL_CHANGE = 0.001
+SLEEP_TIME_BUFFER_UNDERRUN = 0.1
+BUFFER_QUEUE_SIZE = 10
 
 class Player():
     '''
@@ -34,7 +36,7 @@ class Player():
         self.chunk = None
         self.need_chunk = True
         self.has_chunk = False
-        self.chunk_queue = Queue.Queue(maxsize=5)
+        self.chunk_queue = Queue.Queue(maxsize=BUFFER_QUEUE_SIZE)
 
     def createWave(self):
         t = self.last_val
@@ -88,10 +90,12 @@ class Player():
             if self.chunk_queue.qsize() > 0:
                 a = self.chunk_queue.get_nowait()
                 self.stream.write(a)
+            else:
+                time.sleep(SLEEP_TIME_BUFFER_UNDERRUN)
 
     def create_chunk(self):
         while self.is_playing:
-            if self.chunk_queue.qsize() < 5:
+            if self.chunk_queue.qsize() < BUFFER_QUEUE_SIZE:
                 chunk = self.createWave()
                 chunk = chunk.astype(numpy.float32).tostring()
                 self.chunk_queue.put_nowait(chunk)
