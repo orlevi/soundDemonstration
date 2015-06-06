@@ -253,7 +253,7 @@ class Gui():
         self.top_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
         self.top_buttons.append(Button((29.0/60,5.0/60),(5.0/60,10.0/60),"-0.1Hz", self.interface.decreaseFreqFine))
               
-        self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.start_microphone_sampling))
+        self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.stop_start_FFT_computation))
         self.glass_buttons.append(Button((41.0/60,5.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
         self.glass_buttons.append(Button((47.0/60,17.5/60),(5.0/60,40.0/60),'1st peak', self.set_first_peak))
         self.glass_buttons.append(Button((53.0/60,17.5/60),(5.0/60,40.0/60),'2nd peak', self.set_second_peak))

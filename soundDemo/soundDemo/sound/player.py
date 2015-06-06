@@ -8,6 +8,7 @@ import pyaudio
 import time
 import numpy
 import math
+import threading
 
 
 FS = 44100
@@ -28,6 +29,9 @@ class Player():
         self.last_val = 0
         self.vol = self.interface.vol
         self.freq = self.interface.freq
+        self.chunk = None
+        self.need_chunk = True
+        self.has_chunk = False
         
     def createWave(self):
         t = self.last_val
@@ -63,15 +67,38 @@ class Player():
         return (data, pyaudio.paContinue)
 
     def playWave(self):
+
         self.is_playing = True
-        self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment, frames_per_buffer = CHUNK)
-        self.stream.start_stream()
-             
+
+        self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, frames_per_buffer = CHUNK)
+        #self.stream = self.player.open(format = pyaudio.paFloat32, channels = 2, rate = FS, output = True, stream_callback = self.nextSegment, frames_per_buffer = CHUNK)
+        #self.stream.start_stream()
+        self.creator_t = threading.Thread(target=self.create_chunk)
+        self.creator_t.start()
+        self.player_t = threading.Thread(target=self.play_chunk)
+        self.player_t.start()
+
+    def play_chunk(self):
+        while self.is_playing:
+            if self.has_chunk:
+                a = self.chunk
+                self.has_chunk = False
+                self.stream.write(a)
+
+    def create_chunk(self):
+        while self.is_playing:
+            if not self.has_chunk:
+                chunk = self.createWave()
+                self.chunk = chunk.astype(numpy.float32).tostring()
+                self.has_chunk = True
+
+
     def stopWave(self):
+        self.is_playing = False
+        time.sleep(0.1)
         self.stream.stop_stream()
         self.stream.close()
         self.last_val = 0
-        self.is_playing = False
     
     def close_nicely(self):
         if self.is_playing:
