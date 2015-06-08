@@ -18,3 +18,6 @@ TUBE_FIXED_1 = 550
 TUBE_FIXED_2 = 650
 TUBE_FIXED_3 = 750
 
+WAV_FILE = 'simsg813.wav'
+
+
