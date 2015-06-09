@@ -292,8 +292,12 @@ class Gui():
         self.glass_buttons.append(Button((47.0/60,17.5/60),(5.0/60,40.0/60),'1st peak', self.set_first_peak))
         self.glass_buttons.append(Button((53.0/60,17.5/60),(5.0/60,40.0/60),'2nd peak', self.set_second_peak))
         
-        self.chladni_buttons.append(Button((5.0/60,17.0/60),(15.0/60,33.0/60),"Chladni fixed freq I", self.chladni_fixed_1))
-        self.chladni_buttons.append(Button((22.0/60,17.0/60),(15.0/60,33.0/60),"Chladni fixed freq II", self.chladni_fixed_2))
+        self.chladni_buttons.append(Button((5.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq I", self.chladni_fixed_1))
+        self.chladni_buttons.append(Button((14.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq II", self.chladni_fixed_2))
+        self.chladni_buttons.append(Button((23.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq III", self.chladni_fixed_3))
+        self.chladni_buttons.append(Button((32.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq IV", self.chladni_fixed_4))
+        self.chladni_buttons.append(Button((41.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq V", self.chladni_fixed_5))
+        self.chladni_buttons.append(Button((50.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq VI", self.chladni_fixed_6))
         
         self.ruben_buttons.append(Button((5.0/60,17.0/60),(12.0/60,33.0/60),"Rubn's tube fixed freq I", self.ruben_fixed_1))
         self.ruben_buttons.append(Button((19.0/60,17.0/60),(12.0/60,33.0/60),"Rubn's tube fixed freq II", self.ruben_fixed_2))
@@ -384,10 +388,28 @@ class Gui():
         self.in_ruben = True 
         
     def chladni_fixed_1(self):
-        self.interface.setFreq(config.CHLADNI_FIXED_1)
+        self.interface.setFreq(config.CHLADNI_FIXED_1[0])
+        self.interface.setVol(config.CHLADNI_FIXED_1[1])
 
     def chladni_fixed_2(self):
-        self.interface.setFreq(config.CHLADNI_FIXED_2)
+        self.interface.setFreq(config.CHLADNI_FIXED_2[0])
+        self.interface.setVol(config.CHLADNI_FIXED_2[1])
+    
+    def chladni_fixed_3(self):
+        self.interface.setFreq(config.CHLADNI_FIXED_3[0])
+        self.interface.setVol(config.CHLADNI_FIXED_3[1])
+    
+    def chladni_fixed_4(self):
+        self.interface.setFreq(config.CHLADNI_FIXED_4[0])
+        self.interface.setVol(config.CHLADNI_FIXED_4[1])
+    
+    def chladni_fixed_5(self):
+        self.interface.setFreq(config.CHLADNI_FIXED_5[0])
+        self.interface.setVol(config.CHLADNI_FIXED_5[1])
+    
+    def chladni_fixed_6(self):
+        self.interface.setFreq(config.CHLADNI_FIXED_6[0])
+        self.interface.setVol(config.CHLADNI_FIXED_6[1])
       
     def ruben_fixed_1(self):
         self.interface.setFreq(config.TUBE_FIXED_1) 

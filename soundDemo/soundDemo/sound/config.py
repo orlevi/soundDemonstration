@@ -9,14 +9,18 @@ VOLUME_DEFAULT = 0.05       # fraction of the VOLUME_MAXIMUM that will be used w
 KEYBOARD_VOLUME_JUMP = 0.05 # fraction of the VOLUME_MAXIMUM that will be added by keyboard up/down arrow press
 KEYBOARD_VOLUME_TIMEOUT = 3 # time in seconds between leaving the volume keyboard key and until the volume drops to its default
 
-#### Chladni Plate fixed frquencies ####
-CHLADNI_FIXED_1 = 350
-CHLADNI_FIXED_2 = 450
+#### Chladni Plate fixed data [frquency, volume] ####
+CHLADNI_FIXED_1 = [350, 0.1]
+CHLADNI_FIXED_2 = [450, 0.15]
+CHLADNI_FIXED_3 = [550, 0.2]
+CHLADNI_FIXED_4 = [650, 0.25]
+CHLADNI_FIXED_5 = [750, 0.3]
+CHLADNI_FIXED_6 = [850, 0.35]
 
-#### Ruben's Tube fixed frquencies ####
-TUBE_FIXED_1 = 550
-TUBE_FIXED_2 = 650
-TUBE_FIXED_3 = 750
+#### Ruben's Tube fixed data [frquency, volume] ####
+TUBE_FIXED_1 = [550, 0.4]
+TUBE_FIXED_2 = [650, 0.45]
+TUBE_FIXED_3 = [750, 0.5]
 
 WAV_FILE = 'simsg813.wav'
 
