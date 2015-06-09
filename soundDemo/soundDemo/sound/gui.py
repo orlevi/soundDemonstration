@@ -11,6 +11,7 @@ from pygame.locals import *
 #canvas size constants
 WIDTH = 600
 HEIGHT = 600
+
 #drawing constants
 OFFSET = 1
 GRAY = (192,192,192)
@@ -21,7 +22,9 @@ BLACK = (0,0,0)
 RED = (255,0,0)
 GREEN = (0,255,0)
 BLUE = (0,0,255)
+
 Y_SCALE = 2.0/600
+
 #events constants
 LEFT = 1
 
@@ -121,6 +124,10 @@ class Scroll():
         self.color = color
         self.update_layout(WIDTH, HEIGHT)
         self.is_clicked = False
+        self.key_was_pressed = False
+        self.timeout_count = False
+        self.timeout_value = 0.0
+        self.control_key_pressed = 0
         self.click_height = 0
         self.untouched_value = untouched_factor * self.size[1]
         self.max_value = max_value
@@ -132,14 +139,25 @@ class Scroll():
         
     def draw(self, canvas):
         if self.is_clicked:
-            self.update_scroll_position()
-            self.drag_function(float(self.max_value * self.height_offset / self.size[1]))     
+            self.mouse_position_update()
+            self.drag_function(float(self.max_value * self.height_offset / self.size[1]))  
+        if self.key_was_pressed:
+            self.keyboard_position_update()
+            self.key_was_pressed = False
+            self.drag_function(float(self.max_value * self.height_offset / self.size[1]))   
         pygame.draw.line(canvas, DARK_GRAY, (self.position[0], self.position[1]), (self.position[0], self.position[1] + self.size[1]), 3)
         pygame.draw.rect(canvas, self.color, (self.position[0] - self.size[0]/2, self.position[1] + 39.0/40*self.size[1] - self.height_offset, self.size[0],self.size[1]/20), 0)
         
-    def update_scroll_position(self):
+    def mouse_position_update(self):
         pos = pygame.mouse.get_pos()
         self.height_offset = self.click_height - pos[1] + self.untouched_value
+        self.update_scroll_position()
+        
+    def keyboard_position_update(self):
+        self.height_offset = self.untouched_value + self.control_key_pressed * config.KEYBOARD_VOLUME_JUMP * self.size[1]
+        self.update_scroll_position()
+    
+    def update_scroll_position(self):
         if self.height_offset < 0:
             self.height_offset = 0
         elif self.height_offset > self.size[1]:
@@ -157,6 +175,22 @@ class Scroll():
             self.height_offset = self.untouched_value
             self.drag_function(float(self.height_offset / self.size[1]))
             
+    def change_key_pressed(self, value):
+        self.control_key_pressed = self.control_key_pressed + value
+        self.key_was_pressed = True
+        self.timeout_count = False
+        self.timeout_value = 0.0
+            
+    def change_key_released(self, value):
+        self.timeout_count = True
+        
+    def handle_control_timeout(self, ms):
+        if self.timeout_count:
+            self.timeout_value = self.timeout_value + ms / 1000.0
+            if self.timeout_value > config.KEYBOARD_VOLUME_TIMEOUT:
+                self.control_key_pressed = 0
+                self.keyboard_position_update()
+                self.drag_function(float(self.height_offset / self.size[1]))
 
 class Button():
     
@@ -417,14 +451,22 @@ class Gui():
                     elif event.key == K_RIGHT:
                         self.interface.increaseFreqFine()
                     elif event.key == K_UP:
-                        print "up"
+                        self.volume_scroll.change_key_pressed(1)
                     elif event.key == K_DOWN:
-                        print "down"
+                        self.volume_scroll.change_key_pressed(-1)
+                elif event.type == KEYUP:
+                    if event.key == K_UP:
+                        self.volume_scroll.change_key_released(1)
+                    elif event.key == K_DOWN:
+                        self.volume_scroll.change_key_released(-1)
+                    
                                    
             self.draw()         
             pygame.display.update()
             ms = self.fps_Clock.tick(60)
             
+            self.volume_scroll.handle_control_timeout(ms)
+                
             self.time = self.time + (ms/1000.0)
             if self.time > 1:
                 self.time = self.time - 1
