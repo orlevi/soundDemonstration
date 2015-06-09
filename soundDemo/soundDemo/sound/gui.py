@@ -260,6 +260,7 @@ class Gui():
         self.player = player
         
         self.is_playing = False
+        self.is_playing_wav_file = False
         
         self.in_glass = True
         self.in_chladni = False
@@ -299,9 +300,10 @@ class Gui():
         self.chladni_buttons.append(Button((41.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq V", self.chladni_fixed_5))
         self.chladni_buttons.append(Button((50.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq VI", self.chladni_fixed_6))
         
-        self.ruben_buttons.append(Button((5.0/60,17.0/60),(12.0/60,33.0/60),"Rubn's tube fixed freq I", self.ruben_fixed_1))
-        self.ruben_buttons.append(Button((19.0/60,17.0/60),(12.0/60,33.0/60),"Rubn's tube fixed freq II", self.ruben_fixed_2))
-        self.ruben_buttons.append(Button((33.0/60,17.0/60),(12.0/60,33.0/60),"Rubn's tube fixed freq III", self.ruben_fixed_3))
+        self.ruben_buttons.append(Button((5.0/60,17.0/60),(10.0/60,33.0/60),"Rubn's tube fixed freq I", self.ruben_fixed_1))
+        self.ruben_buttons.append(Button((16.0/60,17.0/60),(10.0/60,33.0/60),"Rubn's tube fixed freq II", self.ruben_fixed_2))
+        self.ruben_buttons.append(Button((27.0/60,17.0/60),(10.0/60,33.0/60),"Rubn's tube fixed freq III", self.ruben_fixed_3))
+        self.ruben_buttons.append(Button((38.0/60,17.0/60),(10.0/60,33.0/60),"wav fike", self.play_stop_wav_file))
 
         self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
         
@@ -412,14 +414,25 @@ class Gui():
         self.interface.setVol(config.CHLADNI_FIXED_6[1])
       
     def ruben_fixed_1(self):
-        self.interface.setFreq(config.TUBE_FIXED_1) 
+        self.interface.setFreq(config.TUBE_FIXED_1[0]) 
+        self.interface.setVol(config.TUBE_FIXED_1[1])
          
     def ruben_fixed_2(self):
-        self.interface.setFreq(config.TUBE_FIXED_2)
-        
+        self.interface.setFreq(config.TUBE_FIXED_2[0])
+        self.interface.setVol(config.TUBE_FIXED_1[1])
+                
     def ruben_fixed_3(self):
-        self.interface.setFreq(config.TUBE_FIXED_3)
-        
+        self.interface.setFreq(config.TUBE_FIXED_3[0])
+        self.interface.setVol(config.TUBE_FIXED_1[1])
+
+    def play_stop_wav_file(self):
+        if not self.is_playing_wav_file:
+            self.is_playing_wav_file = True
+            self.player.play_wav_file()
+        else:
+            self.is_playing_wav_file = False
+            self.player.stop_wav_file_play()
+    
     def main_loop(self):
         while not self.done:
             for event in pygame.event.get():
