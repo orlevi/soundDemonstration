@@ -58,3 +58,4 @@ class Interface():
         
     def setFreq(self, freq):
         self.freq = freq
+

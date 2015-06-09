@@ -37,11 +37,12 @@ class Sampler(object):
         self._fft_frequencies = None
         self._audio = None  # hold recorded audio
 
-        self._time_sampling_start = None  # hold the time start_microphone_sampling() was called and started to sample microphone
         self._already_started_recording = False
         self._zero_padding_factor = 5  # number of sample length zeros to add (if we sampled 100 audio points add 100 * self._zero_padding_factor zeros)
         self._begin_freq_bin = None
         self._end_frequency_bin = None
+
+        self._fft_compute = True
 
         self._first = True
         logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
@@ -75,6 +76,14 @@ class Sampler(object):
         self._peakFFT = ([0, 0], [0, 0])
         self._peak_waveform = numpy.zeros(len(self._fft_frequencies))
 
+    def stop_start_FFT_computation(self):
+        self._fft_compute = not self._fft_compute
+        if self._fft_compute is True:
+            self._stop_recording_thread = False
+            self.start_microphone_sampling()
+        else:
+            self._stop_recording_thread = True
+
     def get_peak_waveform(self):
         return self._fft_frequencies, self._peak_waveform
 
@@ -83,20 +92,13 @@ class Sampler(object):
         start to probe microphone for microphone_sampling_time time and compute FFT
         :return:
         """
-        if not self._already_started_recording:
-            self._already_started_recording = True
-            self._time_sampling_start = time.clock()
+        # open recorder thread
+        recorder_thread = threading.Thread(target=self._record)
+        recorder_thread.start()
 
-            # open microphone stream
-            #self._init_recorder()
-
-            # open recorder thread
-            recorder_thread = threading.Thread(target=self._record)
-            recorder_thread.start()
-
-            # open fft computer thread
-            fft_thread = threading.Thread(target=self._fft_computer)
-            fft_thread.start()
+        # open fft computer thread
+        fft_thread = threading.Thread(target=self._fft_computer)
+        fft_thread.start()
 
 
     def close_pyaudio_nicely(self):
@@ -169,13 +171,14 @@ class Sampler(object):
         logging.debug("started recorder thread")
 
         while not self._stop_recording_thread:
-            if not self._new_audio:
-                for i in range(self._chunks_to_record):
-                    self._audio[i * self._buffer_size: (i+1) * self._buffer_size] = self._get_audio()
-                #logging.debug("read new audio data, {}".format(time.clock()))
-                self._new_audio = True
+            if self._fft_compute:
+                if not self._new_audio:
+                    for i in range(self._chunks_to_record):
+                        self._audio[i * self._buffer_size: (i+1) * self._buffer_size] = self._get_audio()
+                    #logging.debug("read new audio data, {}".format(time.clock()))
+                    self._new_audio = True
 
-            time.sleep(0.01)
+                time.sleep(0.01)
         logging.debug("ended recorder thread")
 
     def _get_audio(self):
@@ -194,10 +197,11 @@ class Sampler(object):
         """
         logging.debug("started fft thread")
         while not self._stop_recording_thread:
-            if self._new_audio:
-                self._fft()
-                self._new_audio = False
-                #logging.debug("wrote new fft data")
+            if self._fft_compute:
+                if self._new_audio:
+                    self._fft()
+                    self._new_audio = False
+                    #logging.debug("wrote new fft data")
         logging.debug("ended fft thread")
 
     def _fft(self, log_scale=True):
