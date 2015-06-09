@@ -115,6 +115,7 @@ class Player():
             self.stopWave()
         
     def play_wav_file(self):
+        #print 'in play_wav_file'
         self.stopWave()
         wf = wave.open(config.WAV_FILE)
         wav_channels = wf.getnchannels()
@@ -125,6 +126,7 @@ class Player():
                                   rate=wav_rate,
                                   output=True)
 
+        self.keep_playing_file = True
         wav_t = threading.Thread(target=self.file_player_thread, args=(self.wav_stream, wf))
         wav_t.start()
 
@@ -135,6 +137,7 @@ class Player():
             d = wf.readframes(CHUNK)
 
     def stop_wav_file_play(self):
+        #print 'in stop_wav_file_play'
         self.keep_playing_file = False
         time.sleep(0.1)
         self.wav_stream.stop_stream()
