@@ -40,6 +40,8 @@ class Player():
         self.has_chunk = False
         self.chunk_queue = Queue.Queue(maxsize=BUFFER_QUEUE_SIZE)
         self.keep_playing_file = True
+        self.wav_thread_player_on = False
+
 
     def createWave(self):
         t = self.last_val
@@ -131,10 +133,13 @@ class Player():
         wav_t.start()
 
     def file_player_thread(self, stream, wf):
+        self.wav_thread_player_on = True
         d = wf.readframes(CHUNK)
         while d and self.keep_playing_file:
             stream.write(d)
             d = wf.readframes(CHUNK)
+        #self.stop_wav_file_play()
+        self.wav_thread_player_on = False
 
     def stop_wav_file_play(self):
         #print 'in stop_wav_file_play'
@@ -142,6 +147,12 @@ class Player():
         time.sleep(0.1)
         self.wav_stream.stop_stream()
         self.wav_stream.close()
+
+    def play_stop_wav_file(self):
+        if self.wav_thread_player_on:
+            self.stop_wav_file_play()
+        else:
+            self.play_wav_file()
 
 
 if __name__ == '__main__':
