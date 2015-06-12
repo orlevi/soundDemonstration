@@ -305,7 +305,7 @@ class Gui():
         self.ruben_buttons.append(Button((27.0/60,17.0/60),(10.0/60,33.0/60),"Rubn's tube fixed freq III", self.ruben_fixed_3))
         self.ruben_buttons.append(Button((38.0/60,17.0/60),(10.0/60,33.0/60),"wav fike", self.player.play_stop_wav_file))
 
-        self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
+        #self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
         
         self.volume_scroll = Scroll((25.0/600,50.0/600), (25.0/600,400.0/600), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
         
@@ -316,6 +316,11 @@ class Gui():
         self.main_loop()                                        # start the main loop of the gui
     
     def draw(self):
+        '''
+        this method handles all the drawing to the screen. it is executed on every iteration of the main loop (should be
+        ~60 frames per second).
+        '''
+        #get data necessary for the drawing
         self.first_peak = self.sampler.get_peak_fft()[0][0]
         self.second_peak = self.sampler.get_peak_fft()[0][1]
         self.glass_buttons[2].text = "1st peak " + "{0:.1f}".format(self.first_peak) + "Hz"
@@ -324,25 +329,38 @@ class Gui():
         if self.sampler.has_new_fft():
             self.freq_line, self.fft_data = self.sampler.get_fft_data()
             self.freq_line, self.fft_peak_data = self.sampler.get_peak_waveform()
+        
+        #draw display background
         self.canvas.fill(GRAY)
+        
+        #draw the elements that are shared between different demonstrations (glass, chladni, tube)
         for button in self.top_buttons:
             button.draw(self.canvas) 
         self.volume_scroll.draw(self.canvas)
+        
+        #draw the elements that are unique to the glass demonstration
         if self.in_glass:
             for button in self.glass_buttons:
                 button.draw(self.canvas) 
-            self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
+            #self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
             self.canvas.blit(freq_label, (5.0/60*self.width,50.0/60*self.height))
+            
+        #draw the elements that are unique to the chladni plate demonstration        
         elif self.in_chladni:
             for button in self.chladni_buttons:
                 button.draw(self.canvas)
             self.canvas.blit(freq_label, (50.0/600*self.width,500.0/600*self.height))
+        
+        #draw the elements that are unique to the ruben's tube demonstration
         elif self.in_ruben:
             for button in self.ruben_buttons:
                 button.draw(self.canvas)
             self.canvas.blit(freq_label, (50.0/600*self.width,500.0/600*self.height))
                              
     def play_stop_wave(self):
+        ''' 
+        this method is binded to the play/stop button
+        '''
         if self.is_playing:
             self.player.stopWave()
         else:
@@ -350,12 +368,22 @@ class Gui():
         self.is_playing = not self.is_playing
         
     def set_first_peak(self):
+        ''' 
+        this method is binded to the first peak button
+        '''
         self.interface.setFreq(self.first_peak)
         
     def set_second_peak(self):
+        ''' 
+        this method is binded to the second peak button
+        '''
         self.interface.setFreq(self.second_peak)
         
     def update_locations(self, size):
+        '''
+        this method is called upon window size change, it changes the layout of the elements on display
+        according to the new window size.
+        '''
         self.width = size[0]
         self.height = size[1]
         for button in self.top_buttons:
@@ -366,15 +394,23 @@ class Gui():
             button.update_layout(self.height, self.width)
         for button in self.ruben_buttons:
             button.update_layout(self.height, self.width)
-        self.plotter.update_layout(self.width, self.height)
+        #self.plotter.update_layout(self.width, self.height)
         self.volume_scroll.update_layout(self.width, self.height)
 
+    """
     def set_freq_from_plotter(self, pos):
+        '''
+        this method sets the play frequency according to the position that was clicked on the graph frame 
+        '''
         freq = self.plotter.check_click(pos, self.freq_line)
         if freq != 0:
             self.interface.setFreq(freq)
+    """
             
     def set_glass(self):
+        '''
+        this method is binded to the "wine glass button", sets the display to the wine demonstration layout
+        '''
         self.in_glass = True
         self.in_chladni = False
         self.in_ruben = False
@@ -458,7 +494,7 @@ class Gui():
                     if self.in_glass:
                         for button in self.glass_buttons:
                             button.check_click(event.pos)
-                        self.set_freq_from_plotter(event.pos)
+                        #self.set_freq_from_plotter(event.pos)
                         
                     elif self.in_chladni:
                         for button in self.chladni_buttons:
