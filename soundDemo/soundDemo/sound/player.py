@@ -103,6 +103,8 @@ class Player():
     def stopWave(self):
         self.is_playing = False
         time.sleep(0.1)
+        while not self.chunk_queue.empty():    #emptying the queue so next time we start without leftovers 
+            self.chunk_queue.get_nowait()
         try:
             self.stream.stop_stream()
             self.stream.close()
