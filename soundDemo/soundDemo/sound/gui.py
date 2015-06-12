@@ -20,6 +20,8 @@ DARK_GRAY = (128,128,128)
 WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (255,0,0)
+LIGHT_RED = (255,115,115)
+LIGHT_GREEN = (115,255,115)
 GREEN = (0,255,0)
 BLUE = (0,0,255)
 
@@ -194,11 +196,13 @@ class Scroll():
 
 class Button():
     
-    def __init__(self, pos_factor, size_factor, text, press_func = None, release_func = None, color = GRAY):
+    def __init__(self, pos_factor, size_factor, text, press_func = None, release_func = None, color = GRAY, second_color = None):
         self.pos_factor = pos_factor
         self.size_factor = size_factor
         self.update_layout(WIDTH, HEIGHT)
         self.text = text
+        self.first_color = color
+        self.second_color = second_color
         self.color = color
         self.is_clicked = False
         self.press_func = press_func
@@ -212,12 +216,15 @@ class Button():
     def check_click(self, pos):
         if (pos[1] >= self.position[0]) and (pos[1] <= self.position[0]+self.size[0]) and (pos[0] >= self.position[1]) and (pos[0] <= self.position[1]+self.size[1]):
             self.is_clicked = True
+            if self.second_color != None:
+                self.color = self.second_color
             if self.press_func != None:
                 self.press_func()
                           
     def click_release(self):
         if self.is_clicked:
             self.is_clicked = False
+            self.color = self.first_color
             if self.release_func != None:
                 self.release_func()
             
@@ -282,7 +289,7 @@ class Gui():
         self.top_buttons.append(Button((1.0/60, 22.0/60),(3.0/60, 15.0/60),"Chladni Plate", self.set_chladni))
         self.top_buttons.append(Button((1.0/60, 39.0/60),(3.0/60, 15.0/60),"Ruben's Tube", self.set_ruben))
 
-        self.top_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave)) 
+        self.top_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave, color = LIGHT_GREEN)) 
         self.top_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
         self.top_buttons.append(Button((17.0/60,5.0/60),(5.0/60,10.0/60),"-1Hz", self.interface.decreaseFreq))
         self.top_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
@@ -324,8 +331,14 @@ class Gui():
         self.first_peak = self.sampler.get_peak_fft()[0][0]
         self.second_peak = self.sampler.get_peak_fft()[0][1]
         self.glass_buttons[2].text = "1st peak " + "{0:.1f}".format(self.first_peak) + "Hz"
-        self.glass_buttons[3].text = "2nd peak " + "{0:.1f}".format(self.second_peak) + "Hz"        
+        self.glass_buttons[3].text = "2nd peak " + "{0:.1f}".format(self.second_peak) + "Hz"  
         freq_label = self.font.render("{0:.1f}".format(self.interface.freq) + "Hz", 1, BLACK)
+        if self.is_playing:
+            self.top_buttons[3].text = "Stop"
+            self.top_buttons[3].color = LIGHT_RED
+        else:
+            self.top_buttons[3].text = "Play"
+            self.top_buttons[3].color = LIGHT_GREEN
         if self.sampler.has_new_fft():
             self.freq_line, self.fft_data = self.sampler.get_fft_data()
             self.freq_line, self.fft_peak_data = self.sampler.get_peak_waveform()
