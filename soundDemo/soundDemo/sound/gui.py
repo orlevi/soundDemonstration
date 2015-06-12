@@ -341,7 +341,14 @@ class Gui():
             for button in self.ruben_buttons:
                 button.draw(self.canvas)
             self.canvas.blit(freq_label, (50.0/600*self.width,500.0/600*self.height))
-               
+                             
+    def play_stop_wave(self):
+        if self.is_playing:
+            self.player.stopWave()
+        else:
+            self.player.playWave()
+        self.is_playing = not self.is_playing
+        
     def set_first_peak(self):
         self.interface.setFreq(self.first_peak)
         
