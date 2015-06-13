@@ -100,7 +100,6 @@ class Sampler(object):
         fft_thread = threading.Thread(target=self._fft_computer)
         fft_thread.start()
 
-
     def close_pyaudio_nicely(self):
         """
         close streams and pyaudio object
@@ -239,9 +238,21 @@ class Sampler(object):
             fft_resolution = self._fft_frequencies[1] - self._fft_frequencies[0]
             delta_bins = int(config.DELTA_FREQ_FOR_MAXIMA / fft_resolution)
 
-            min = max_p - delta_bins if max_p - delta_bins >= 0 else 0
-            max = max_p + delta_bins if max_p + delta_bins < len(fft_values) else len(fft_values) - 1
-            excluded_fft_values = numpy.concatenate((fft_values[:min], numpy.zeros(delta_bins*2), fft_values[max:]))
+            if max_p - delta_bins >= 0:
+                d1 = delta_bins
+                min = max_p - delta_bins
+            else:
+                d1 = max_p
+                min = 0
+
+            if max_p + delta_bins < len(fft_values):
+                d2 = delta_bins
+                max = max_p + delta_bins
+            else:
+                d2 = len(fft_values) - max_p - 1
+                max = len(fft_values) - 1
+
+            excluded_fft_values = numpy.concatenate((fft_values[:min], numpy.zeros(d1 + d2), fft_values[max:]))
             max_p2 = excluded_fft_values.argmax()
             max_val2 = excluded_fft_values[max_p2]
 
@@ -259,7 +270,7 @@ if __name__ == '__main__':
     #ax.set_autoscaley_on(True)
     ax.grid()
     ax.set_ylim([0, 300])
-    ax.set_xlim([0, 2000])
+    ax.set_xlim([300, 1050])
     ax.set_title('momentary FFT')
     ax.set_xlabel('frequency [Khz]')
     ax.set_ylabel('power [Log]')

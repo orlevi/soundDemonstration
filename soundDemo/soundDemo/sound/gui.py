@@ -289,7 +289,7 @@ class Gui():
         self.top_buttons.append(Button((1.0/60, 22.0/60),(3.0/60, 15.0/60),"Chladni Plate", self.set_chladni))
         self.top_buttons.append(Button((1.0/60, 39.0/60),(3.0/60, 15.0/60),"Ruben's Tube", self.set_ruben))
 
-        self.top_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave, color = LIGHT_GREEN)) 
+        self.top_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave, color = LIGHT_GREEN))
         self.top_buttons.append(Button((11.0/60,5.0/60),(5.0/60,10.0/60),"+1Hz", self.interface.increaseFreq))
         self.top_buttons.append(Button((17.0/60,5.0/60),(5.0/60,10.0/60),"-1Hz", self.interface.decreaseFreq))
         self.top_buttons.append(Button((23.0/60,5.0/60),(5.0/60,10.0/60),"+0.1Hz", self.interface.increaseFreqFine))
@@ -307,10 +307,11 @@ class Gui():
         self.chladni_buttons.append(Button((41.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq V", self.chladni_fixed_5))
         self.chladni_buttons.append(Button((50.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq VI", self.chladni_fixed_6))
         
-        self.ruben_buttons.append(Button((5.0/60,17.0/60),(10.0/60,33.0/60),"Rubn's tube fixed freq I", self.ruben_fixed_1))
-        self.ruben_buttons.append(Button((16.0/60,17.0/60),(10.0/60,33.0/60),"Rubn's tube fixed freq II", self.ruben_fixed_2))
-        self.ruben_buttons.append(Button((27.0/60,17.0/60),(10.0/60,33.0/60),"Rubn's tube fixed freq III", self.ruben_fixed_3))
-        self.ruben_buttons.append(Button((38.0/60,17.0/60),(10.0/60,33.0/60),"wav fike", self.player.play_stop_wav_file))
+        self.ruben_buttons.append(Button((5.0/60,17.0/60),(8.0/60,33.0/60),"Rubn's tube fixed freq I", self.ruben_fixed_1))
+        self.ruben_buttons.append(Button((14.0/60,17.0/60),(8.0/60,33.0/60),"Rubn's tube fixed freq II", self.ruben_fixed_2))
+        self.ruben_buttons.append(Button((23.0/60,17.0/60),(8.0/60,33.0/60),"Rubn's tube fixed freq III", self.ruben_fixed_3))
+        self.ruben_buttons.append(Button((32.0/60,17.0/60),(8.0/60,33.0/60),"wav file", self.player.play_stop_wav_file))
+        self.ruben_buttons.append(Button((41.0/60,17.0/60),(8.0/60,33.0/60),"microphone play", self.player.play_stop_mic))
 
         #self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
         
@@ -369,17 +370,20 @@ class Gui():
             for button in self.ruben_buttons:
                 button.draw(self.canvas)
             self.canvas.blit(freq_label, (50.0/600*self.width,500.0/600*self.height))
-                             
+
     def play_stop_wave(self):
         ''' 
         this method is binded to the play/stop button
         '''
+
         if self.is_playing:
-            self.player.stopWave()
+            self.player.stop_sine_wave()
         else:
-            self.player.playWave()
+            self.player.play_sine_wave()
+
+        #self.player.play_stop_sine_wave()
         self.is_playing = not self.is_playing
-        
+
     def set_first_peak(self):
         ''' 
         this method is binded to the first peak button
@@ -474,15 +478,6 @@ class Gui():
         self.interface.setFreq(config.TUBE_FIXED_3[0])
         self.interface.setVol(config.TUBE_FIXED_1[1])
 
-    '''
-    def play_stop_wav_file(self):
-        if not self.is_playing_wav_file:
-            self.is_playing_wav_file = True
-            self.player.play_wav_file()
-        else:
-            self.is_playing_wav_file = False
-            self.player.stop_wav_file_play()
-    '''
     def main_loop(self):
         while not self.done:
             for event in pygame.event.get():
