@@ -282,19 +282,20 @@ class FrequencyController():
         '''
         self.window_height = window_height
         self.window_width = window_width
-        self.pos_factor = pos_factor
         self.size_factor = size_factor
-        self.interface  = interface
+        self.pos_factor = pos_factor
+        self.interface = interface
         
+        self.buttons = []
+        
+        self.update_layout(HEIGHT, WIDTH)
         self.find_font_size()
-        
+                
         self.kilo_digit = 0
         self.centum_digit = 0 
         self.deci_digit = 0
         self.unit_digit = 0
         self.fraction_digit = 0 
-        
-        self.buttons = []
         
         self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+5.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.centum_up))
         self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+5.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.centum_down))
@@ -307,11 +308,13 @@ class FrequencyController():
         
     def find_font_size(self):
         size = 1
-        desired_size = int(3.0/11*self.size_factor[0]*HEIGHT)
-        while pygame.font.SysFont("monospace", size + 1).get_height() < desired_size:
+        font_letter_space = pygame.font.SysFont("monospace", size + 1).size("0")
+        print "font_letter_space" + str(font_letter_space)
+        while font_letter_space[1] <= self.size[0]/3.0 and font_letter_space[0] <= self.size[1]/5.0:
             size = size + 1
+            font_letter_space = pygame.font.SysFont("monospace", size).size("0")
+            print "size" + str(size)
         self.font = pygame.font.SysFont("monospace", size)
-
         
     def centum_up(self):
         self.interface.setFreq(self.interface.freq + 100)
@@ -368,9 +371,9 @@ class FrequencyController():
     def update_layout(self, height, width):
         for button in self.buttons:
             button.update_layout(height, width) 
-        self.window_height = height
-        self.window_width = width
-        self.find_font_size()           
+        self.size = (self.size_factor[1] * width, self.size_factor[0] * height)
+        self.pos = (self.pos_factor[1] * width, self.pos_factor[0] * height)
+        self.find_font_size()
     
     def draw(self, canvas):
         '''
@@ -380,19 +383,18 @@ class FrequencyController():
         for button in self.buttons:
             button.draw(canvas)
             
-        fraction_digit_label = self.font.render(str(self.fraction_digit), 1, BLACK)
-        unit_digit_label = self.font.render(str(self.unit_digit), 1, BLACK)
+        fraction_digit_label = self.font.render(str(self.fraction_digit)+"Hz", 1, BLACK)
+        unit_digit_label = self.font.render(str(self.unit_digit)+".", 1, BLACK)
         deci_digit_label = self.font.render(str(self.deci_digit), 1, BLACK)
         centum_digit_label = self.font.render(str(self.centum_digit), 1, BLACK)
         kilo_digit_label = self.font.render(str(self.kilo_digit), 1, BLACK)    
         
-        pos = [self.pos_factor[0]*self.window_height, self.pos_factor[1]*self.window_width]
-        size = [self.size_factor[0]*self.window_height,self.size_factor[1]*self.window_width]
-        canvas.blit(fraction_digit_label, (pos[1]+20.0/24*size[1], pos[0]+4.0/11*size[0]))
-        canvas.blit(unit_digit_label, (pos[1]+15.0/24*size[1], pos[0]+4.0/11*size[0]))
-        canvas.blit(deci_digit_label, (pos[1]+10.0/24*size[1], pos[0]+4.0/11*size[0]))
-        canvas.blit(centum_digit_label, (pos[1]+5.0/24*size[1], pos[0]+4.0/11*size[0]))
-        canvas.blit(kilo_digit_label, (pos[1], pos[0]+4.0/11*size[0]))
+        canvas.blit(fraction_digit_label, (self.pos[0]+20.0/24*self.size[0], self.pos[1]+4.0/11*self.size[1]))
+        canvas.blit(unit_digit_label, (self.pos[0]+15.0/24*self.size[0], self.pos[1]+4.0/11*self.size[1]))
+        canvas.blit(deci_digit_label, (self.pos[0]+10.0/24*self.size[0], self.pos[1]+4.0/11*self.size[1]))
+        canvas.blit(centum_digit_label, (self.pos[0]+5.0/24*self.size[0], self.pos[1]+4.0/11*self.size[1]))
+        if self.kilo_digit != 0:
+            canvas.blit(kilo_digit_label, (self.pos[0], self.pos[1]+4.0/11*self.size[1]))
               
 class Gui():
     '''
@@ -468,7 +470,7 @@ class Gui():
 
         self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
         
-        self.freq_controller = FrequencyController((0,0), (0.1,0.2), self.height, self.width, self.interface)
+        self.freq_controller = FrequencyController((50.0/60,0), (0.1,0.2), self.height, self.width, self.interface)
         
         self.volume_scroll = Scroll((25.0/600,50.0/600), (25.0/600,400.0/600), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
         
@@ -515,19 +517,16 @@ class Gui():
                 button.draw(self.canvas) 
             if not self.is_playing:
                 self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
-            self.canvas.blit(freq_label, (5.0/60*self.width,50.0/60*self.height))
             
         #draw the elements that are unique to the chladni plate demonstration        
         elif self.in_chladni:
             for button in self.chladni_buttons:
                 button.draw(self.canvas)
-            self.canvas.blit(freq_label, (50.0/600*self.width,500.0/600*self.height))
         
         #draw the elements that are unique to the ruben's tube demonstration
         elif self.in_ruben:
             for button in self.ruben_buttons:
                 button.draw(self.canvas)
-            self.canvas.blit(freq_label, (50.0/600*self.width,500.0/600*self.height))
 
     def play_stop_wave(self):
         ''' 
