@@ -446,10 +446,10 @@ class Gui():
 
         self.top_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave, color = LIGHT_GREEN))
               
-        self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.stop_start_FFT_computation))
         self.glass_buttons.append(Button((41.0/60,5.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
         self.glass_buttons.append(Button((47.0/60,17.5/60),(5.0/60,40.0/60),'1st peak', self.set_first_peak))
         self.glass_buttons.append(Button((53.0/60,17.5/60),(5.0/60,40.0/60),'2nd peak', self.set_second_peak))
+        #self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.stop_start_FFT_computation))
         
         self.chladni_buttons.append(Button((5.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq I", self.chladni_fixed_1))
         self.chladni_buttons.append(Button((14.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq II", self.chladni_fixed_2))
@@ -485,8 +485,8 @@ class Gui():
         if not self.is_playing:
             self.first_peak = self.sampler.get_peak_fft()[0][0]
             self.second_peak = self.sampler.get_peak_fft()[0][1]
-        self.glass_buttons[2].text = "1st peak " + "{0:.1f}".format(self.first_peak) + "Hz"
-        self.glass_buttons[3].text = "2nd peak " + "{0:.1f}".format(self.second_peak) + "Hz"  
+        self.glass_buttons[1].text = "1st peak " + "{0:.1f}".format(self.first_peak) + "Hz"
+        self.glass_buttons[2].text = "2nd peak " + "{0:.1f}".format(self.second_peak) + "Hz"  
         freq_label = self.font.render("{0:.1f}".format(self.interface.freq) + "Hz", 1, BLACK)
         if self.is_playing:
             self.top_buttons[3].text = "Stop"
