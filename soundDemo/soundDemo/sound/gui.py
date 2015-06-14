@@ -195,8 +195,24 @@ class Scroll():
                 self.drag_function(float(self.height_offset / self.size[1]))
 
 class Button():
+    '''
+    this class represnts a button (used by left mouse clicks).
+    '''
     
     def __init__(self, pos_factor, size_factor, text, press_func = None, release_func = None, color = GRAY, second_color = None):
+        '''
+        constructor.
+        pos_factor   - is the relative position of the button in the program layout (for example, [0.5,0.5] means the upper 
+                       left corner of the button will be positioned in the middle of the program window)
+        size_factor  - is the relative size of the button in the program layout (for example, [0.5,0.5] means the button size
+                       will be half from the program window length and half of the window width - quarter of the window area)
+        text         - the text that will be displayed on the button
+        press_func   - if given, this function will be called when the button is clicked
+        release_func - if given, this function will be called when the button is released
+        color        - the base color of the interior area of the button. default is gray.
+        second_color - if given, the button will change its color to this color when it is clicked (and back to the original 
+                       when it is released)   
+        '''
         self.pos_factor = pos_factor
         self.size_factor = size_factor
         self.update_layout(WIDTH, HEIGHT)
@@ -210,10 +226,16 @@ class Button():
         self.font = pygame.font.SysFont("monospace", 18)
         
     def update_layout(self, width, height):
+        '''
+        update the actual position and size of the of the button in case the program window size was changed 
+        '''
         self.position = (self.pos_factor[0] * width, self.pos_factor[1] * height)
         self.size = (self.size_factor[0] * width, self.size_factor[1] * height)
                 
     def check_click(self, pos):
+        '''
+        check if the button was clicked. calls the press function if it was given.
+        '''
         if (pos[1] >= self.position[0]) and (pos[1] <= self.position[0]+self.size[0]) and (pos[0] >= self.position[1]) and (pos[0] <= self.position[1]+self.size[1]):
             self.is_clicked = True
             if self.second_color != None:
@@ -222,6 +244,10 @@ class Button():
                 self.press_func()
                           
     def click_release(self):
+        '''
+        upon a left mouse button release event, if the button was pressed, it is released and the release function is 
+        called (if such function was given) 
+        '''
         if self.is_clicked:
             self.is_clicked = False
             self.color = self.first_color
@@ -229,6 +255,9 @@ class Button():
                 self.release_func()
             
     def draw(self, canvas):
+        '''
+        draw the button to the screen
+        '''
         if self.is_clicked:
             color1 = DARK_GRAY
             color2 = LIGHT_GRAY
@@ -246,6 +275,10 @@ class Button():
         
 
 class Gui():
+    '''
+    this class is for the graphic user interface of the program. it prints to the screen the buttons, graphs, 
+    scrolls etc., and handles the user interaction with it (mouse clicks, keyboard key presses etc.) 
+    '''
 
     def __init__(self, interface, sampler, player):
         '''
@@ -313,7 +346,7 @@ class Gui():
         self.ruben_buttons.append(Button((32.0/60,17.0/60),(8.0/60,33.0/60),"wav file", self.player.play_stop_wav_file))
         self.ruben_buttons.append(Button((41.0/60,17.0/60),(8.0/60,33.0/60),"microphone play", self.player.play_stop_mic))
 
-        #self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
+        self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
         
         self.volume_scroll = Scroll((25.0/600,50.0/600), (25.0/600,400.0/600), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
         
@@ -329,8 +362,9 @@ class Gui():
         ~60 frames per second).
         '''
         #get data necessary for the drawing
-        self.first_peak = self.sampler.get_peak_fft()[0][0]
-        self.second_peak = self.sampler.get_peak_fft()[0][1]
+        if not self.is_playing:
+            self.first_peak = self.sampler.get_peak_fft()[0][0]
+            self.second_peak = self.sampler.get_peak_fft()[0][1]
         self.glass_buttons[2].text = "1st peak " + "{0:.1f}".format(self.first_peak) + "Hz"
         self.glass_buttons[3].text = "2nd peak " + "{0:.1f}".format(self.second_peak) + "Hz"  
         freq_label = self.font.render("{0:.1f}".format(self.interface.freq) + "Hz", 1, BLACK)
@@ -356,7 +390,8 @@ class Gui():
         if self.in_glass:
             for button in self.glass_buttons:
                 button.draw(self.canvas) 
-            #self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
+            if not self.is_playing:
+                self.plotter.draw(self.canvas, self.interface.freq, self.freq_line, self.fft_data, self.fft_peak_data)
             self.canvas.blit(freq_label, (5.0/60*self.width,50.0/60*self.height))
             
         #draw the elements that are unique to the chladni plate demonstration        
@@ -380,6 +415,7 @@ class Gui():
             self.player.stop_sine_wave()
         else:
             self.player.play_sine_wave()
+        self.sampler.stop_start_FFT_computation()
 
         #self.player.play_stop_sine_wave()
         self.is_playing = not self.is_playing
@@ -411,10 +447,9 @@ class Gui():
             button.update_layout(self.height, self.width)
         for button in self.ruben_buttons:
             button.update_layout(self.height, self.width)
-        #self.plotter.update_layout(self.width, self.height)
+        self.plotter.update_layout(self.width, self.height)
         self.volume_scroll.update_layout(self.width, self.height)
 
-    """
     def set_freq_from_plotter(self, pos):
         '''
         this method sets the play frequency according to the position that was clicked on the graph frame 
@@ -422,7 +457,6 @@ class Gui():
         freq = self.plotter.check_click(pos, self.freq_line)
         if freq != 0:
             self.interface.setFreq(freq)
-    """
             
     def set_glass(self):
         '''
@@ -433,52 +467,91 @@ class Gui():
         self.in_ruben = False
         
     def set_chladni(self):
+        '''
+        this method is binded to the "chladni plate button", sets the display to the chladni demonstration layout
+        '''
         self.in_glass = False 
         self.in_chladni = True
         self.in_ruben = False
         
     def set_ruben(self):
+        '''
+        this method is binded to the "Ruben tube button", sets the display to the tube demonstration layout
+        '''
         self.in_glass = False
         self.in_chladni = False
         self.in_ruben = True 
         
     def chladni_fixed_1(self):
+        '''
+        this method is binded to the 1st chladni plate fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.CHLADNI_FIXED_1[0])
         self.interface.setVol(config.CHLADNI_FIXED_1[1])
 
     def chladni_fixed_2(self):
+        '''
+        this method is binded to the 2nd chladni plate fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.CHLADNI_FIXED_2[0])
         self.interface.setVol(config.CHLADNI_FIXED_2[1])
     
     def chladni_fixed_3(self):
+        '''
+        this method is binded to the 3rd chladni plate fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.CHLADNI_FIXED_3[0])
         self.interface.setVol(config.CHLADNI_FIXED_3[1])
     
     def chladni_fixed_4(self):
+        '''
+        this method is binded to the 4th chladni plate fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.CHLADNI_FIXED_4[0])
         self.interface.setVol(config.CHLADNI_FIXED_4[1])
     
     def chladni_fixed_5(self):
+        '''
+        this method is binded to the 5th chladni plate fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.CHLADNI_FIXED_5[0])
         self.interface.setVol(config.CHLADNI_FIXED_5[1])
     
     def chladni_fixed_6(self):
+        '''
+        this method is binded to the 6th chladni plate fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.CHLADNI_FIXED_6[0])
         self.interface.setVol(config.CHLADNI_FIXED_6[1])
       
     def ruben_fixed_1(self):
+        '''
+        this method is binded to the 1st ruben tube fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.TUBE_FIXED_1[0]) 
         self.interface.setVol(config.TUBE_FIXED_1[1])
          
     def ruben_fixed_2(self):
+        '''
+        this method is binded to the 2nd ruben tube fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.TUBE_FIXED_2[0])
         self.interface.setVol(config.TUBE_FIXED_1[1])
                 
     def ruben_fixed_3(self):
+        '''
+        this method is binded to the 3rd ruben tube fixed frequency button, sets pre-defined frequency and volume
+        '''
         self.interface.setFreq(config.TUBE_FIXED_3[0])
         self.interface.setVol(config.TUBE_FIXED_1[1])
 
     def main_loop(self):
+        '''
+        this is the main loop of the gui. the commands within the loop are executed ~60/Sec. 
+        it has two main objectives:
+        1. monitors the different events and call the relevant methods
+        2. call the 'draw' function in the appropriate rate  
+        '''
         while not self.done:
             for event in pygame.event.get():
                 # exit if ESC pressed or 'x' clicked. 
@@ -502,7 +575,8 @@ class Gui():
                     if self.in_glass:
                         for button in self.glass_buttons:
                             button.check_click(event.pos)
-                        #self.set_freq_from_plotter(event.pos)
+                        if not self.is_playing:
+                            self.set_freq_from_plotter(event.pos)
                         
                     elif self.in_chladni:
                         for button in self.chladni_buttons:
@@ -540,13 +614,15 @@ class Gui():
                     elif event.key == K_DOWN:
                         self.volume_scroll.change_key_released(-1)
                     
-                                   
+            # draw to the screen, and "tick" the clock                       
             self.draw()         
             pygame.display.update()
             ms = self.fps_Clock.tick(60)
             
+            # track the time for the volume to jump back to minimum after the key was released
             self.volume_scroll.handle_control_timeout(ms)
                 
+            # track FPS and print it once per second (DEBUG)
             self.time = self.time + (ms/1000.0)
             if self.time > 1:
                 self.time = self.time - 1
@@ -556,8 +632,7 @@ class Gui():
             
         pygame.quit
         
-
-#gui()        
+     
 
                     
         
