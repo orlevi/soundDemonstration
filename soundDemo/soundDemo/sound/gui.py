@@ -4,6 +4,7 @@ Created on May 11 2015
 @author: Or Levi
 '''
 import pygame
+import math
 import config as config
 from pygame.locals import *
 
@@ -271,9 +272,128 @@ class Button():
         label = self.font.render(self.text, 1, BLACK)
         canvas.blit(label, (self.position[1]+(self.size[1]-label.get_width())/2,self.position[0]+(self.size[0]-self.font.get_height())/2))
         
-    
+class FrequencyController():
+    '''
+    this class contains several buttons to change the frequency and displays the current frequency
+    '''
+    def __init__(self, pos_factor, size_factor, window_height, window_width, interface):
+        '''
+        constructor
+        '''
+        self.window_height = window_height
+        self.window_width = window_width
+        self.pos_factor = pos_factor
+        self.size_factor = size_factor
+        self.interface  = interface
         
+        self.find_font_size()
+        
+        self.kilo_digit = 0
+        self.centum_digit = 0 
+        self.deci_digit = 0
+        self.unit_digit = 0
+        self.fraction_digit = 0 
+        
+        self.buttons = []
+        
+        self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+5.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.centum_up))
+        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+5.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.centum_down))
+        self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+10.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.deci_up))
+        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+10.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.deci_down))
+        self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+15.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.unit_up))
+        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+15.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.unit_down))
+        self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+20.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.fraction_up))
+        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+20.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.fraction_down))
+        
+    def find_font_size(self):
+        size = 1
+        desired_size = int(3.0/11*self.size_factor[0]*HEIGHT)
+        while pygame.font.SysFont("monospace", size + 1).get_height() < desired_size:
+            size = size + 1
+        self.font = pygame.font.SysFont("monospace", size)
 
+        
+    def centum_up(self):
+        self.interface.setFreq(self.interface.freq + 100)
+        
+    def centum_down(self):
+        self.interface.setFreq(self.interface.freq - 100)
+        
+    def deci_up(self):
+        self.interface.setFreq(self.interface.freq + 10)
+        
+    def deci_down(self):
+        self.interface.setFreq(self.interface.freq - 10)
+        
+    def unit_up(self):
+        self.interface.setFreq(self.interface.freq + 1)
+        
+    def unit_down(self):
+        self.interface.setFreq(self.interface.freq - 1)
+    
+    def fraction_up(self):
+        self.interface.setFreq(self.interface.freq + 0.1)
+        
+    def fraction_down(self):
+        self.interface.setFreq(self.interface.freq - 0.1)
+    
+    def update_freq(self, freq):
+        '''
+        gets a new frequency and extracts the different digits from it
+        '''
+        self.kilo_digit = int(math.floor(freq / 1000.0))
+        freq = freq - self.kilo_digit * 1000
+        self.centum_digit = int(math.floor(freq / 100.0))
+        freq = freq - self.centum_digit * 100        
+        self.deci_digit = int(math.floor(freq / 10.0))
+        freq = freq - self.deci_digit * 10                
+        self.unit_digit = int(math.floor(freq))
+        freq = freq - self.unit_digit
+        self.fraction_digit = int(math.floor(freq / 0.1))
+        
+    def check_click(self, pos):
+        '''
+        check for clicks on the freq controller buttons
+        '''
+        for button in self.buttons:
+            button.check_click(pos)
+            
+    def click_release(self):
+        '''
+        release pressed button (from the frequency controller buttons)
+        '''
+        for button in self.buttons:
+            button.click_release()
+            
+    def update_layout(self, height, width):
+        for button in self.buttons:
+            button.update_layout(height, width) 
+        self.window_height = height
+        self.window_width = width
+        self.find_font_size()           
+    
+    def draw(self, canvas):
+        '''
+        draws the frequency controller
+        '''
+        self.update_freq(self.interface.freq)
+        for button in self.buttons:
+            button.draw(canvas)
+            
+        fraction_digit_label = self.font.render(str(self.fraction_digit), 1, BLACK)
+        unit_digit_label = self.font.render(str(self.unit_digit), 1, BLACK)
+        deci_digit_label = self.font.render(str(self.deci_digit), 1, BLACK)
+        centum_digit_label = self.font.render(str(self.centum_digit), 1, BLACK)
+        kilo_digit_label = self.font.render(str(self.kilo_digit), 1, BLACK)    
+        
+        pos = [self.pos_factor[0]*self.window_height, self.pos_factor[1]*self.window_width]
+        size = [self.size_factor[0]*self.window_height,self.size_factor[1]*self.window_width]
+        canvas.blit(fraction_digit_label, (pos[1]+20.0/24*size[1], pos[0]+4.0/11*size[0]))
+        canvas.blit(unit_digit_label, (pos[1]+15.0/24*size[1], pos[0]+4.0/11*size[0]))
+        canvas.blit(deci_digit_label, (pos[1]+10.0/24*size[1], pos[0]+4.0/11*size[0]))
+        canvas.blit(centum_digit_label, (pos[1]+5.0/24*size[1], pos[0]+4.0/11*size[0]))
+        canvas.blit(kilo_digit_label, (pos[1], pos[0]+4.0/11*size[0]))
+              
 class Gui():
     '''
     this class is for the graphic user interface of the program. it prints to the screen the buttons, graphs, 
@@ -298,7 +418,7 @@ class Gui():
         self.interface = interface
         self.sampler = sampler
         self.player = player
-        
+                
         self.is_playing = False
         self.is_playing_wav_file = False
         
@@ -348,6 +468,8 @@ class Gui():
 
         self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
         
+        self.freq_controller = FrequencyController((0,0), (0.1,0.2), self.height, self.width, self.interface)
+        
         self.volume_scroll = Scroll((25.0/600,50.0/600), (25.0/600,400.0/600), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
         
         self.freq_line = []
@@ -385,6 +507,7 @@ class Gui():
         for button in self.top_buttons:
             button.draw(self.canvas) 
         self.volume_scroll.draw(self.canvas)
+        self.freq_controller.draw(self.canvas)
         
         #draw the elements that are unique to the glass demonstration
         if self.in_glass:
@@ -410,7 +533,6 @@ class Gui():
         ''' 
         this method is binded to the play/stop button
         '''
-
         if self.is_playing:
             self.player.stop_sine_wave()
         else:
@@ -449,6 +571,7 @@ class Gui():
             button.update_layout(self.height, self.width)
         self.plotter.update_layout(self.width, self.height)
         self.volume_scroll.update_layout(self.width, self.height)
+        self.freq_controller.update_layout(self.height, self.width)
 
     def set_freq_from_plotter(self, pos):
         '''
@@ -571,6 +694,7 @@ class Gui():
                     for button in self.top_buttons:
                         button.check_click(event.pos)
                     self.volume_scroll.check_click(event.pos)
+                    self.freq_controller.check_click(event.pos)
                         
                     if self.in_glass:
                         for button in self.glass_buttons:
@@ -589,6 +713,7 @@ class Gui():
                 # left mouse button released events
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == LEFT:
                     self.volume_scroll.click_release()
+                    self.freq_controller.click_release()
                     for button in self.top_buttons:
                         button.click_release()
                     for button in self.glass_buttons:

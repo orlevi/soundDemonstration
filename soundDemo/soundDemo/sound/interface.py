@@ -58,4 +58,6 @@ class Interface():
         
     def setFreq(self, freq):
         self.freq = freq
+        if freq < 0:
+            self.freq = 0
 
