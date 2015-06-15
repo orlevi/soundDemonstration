@@ -298,13 +298,13 @@ class FrequencyController():
         self.fraction_digit = 0 
         
         self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+5.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.centum_up))
-        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+5.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.centum_down))
+        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+5.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.centum_down))
         self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+10.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.deci_up))
-        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+10.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.deci_down))
+        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+10.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.deci_down))
         self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+15.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.unit_up))
-        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+15.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.unit_down))
+        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+15.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.unit_down))
         self.buttons.append(Button((self.pos_factor[0],self.pos_factor[1]+20.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"+",self.fraction_up))
-        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+20.0/24*self.size_factor[1]),(3.0/10*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.fraction_down))
+        self.buttons.append(Button((self.pos_factor[0]+8.0/11*self.size_factor[0],self.pos_factor[1]+20.0/24*self.size_factor[1]),(3.0/11*self.size_factor[0],4.0/24*self.size_factor[1]),"-",self.fraction_down))
         
     def find_font_size(self):
         size = 1
@@ -444,11 +444,11 @@ class Gui():
         self.top_buttons.append(Button((1.0/60, 22.0/60),(3.0/60, 15.0/60),"Chladni Plate", self.set_chladni))
         self.top_buttons.append(Button((1.0/60, 39.0/60),(3.0/60, 15.0/60),"Ruben's Tube", self.set_ruben))
 
-        self.top_buttons.append(Button((5.0/60,5.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave, color = LIGHT_GREEN))
+        self.top_buttons.append(Button((47.0/60,3.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave, color = LIGHT_GREEN))
               
-        self.glass_buttons.append(Button((41.0/60,5.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
-        self.glass_buttons.append(Button((47.0/60,17.5/60),(5.0/60,40.0/60),'1st peak', self.set_first_peak))
-        self.glass_buttons.append(Button((53.0/60,17.5/60),(5.0/60,40.0/60),'2nd peak', self.set_second_peak))
+        self.glass_buttons.append(Button((53.0/60,3.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
+        self.glass_buttons.append(Button((47.0/60,34.0/60),(5.0/60,25.0/60),'1st peak', self.set_first_peak))
+        self.glass_buttons.append(Button((53.0/60,34.0/60),(5.0/60,25.0/60),'2nd peak', self.set_second_peak))
         #self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.stop_start_FFT_computation))
         
         self.chladni_buttons.append(Button((5.0/60,17.0/60),(8.0/60,33.0/60),"Chladni fixed freq I", self.chladni_fixed_1))
@@ -466,9 +466,9 @@ class Gui():
 
         self.plotter = Plotter((17.5/60,5.0/60), (40.0/60,40.0/60))
         
-        self.freq_controller = FrequencyController((50.0/60,0), (0.1,0.2), self.height, self.width, self.interface)
+        self.freq_controller = FrequencyController((47.0/60,14.0/60), (11.0/60,15.0/60), self.height, self.width, self.interface)
         
-        self.volume_scroll = Scroll((25.0/600,50.0/600), (25.0/600,400.0/600), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
+        self.volume_scroll = Scroll((8.0/60,5.5/60), (2.5/60,38.0/60), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
         
         self.freq_line = []
         self.fft_data = []
@@ -487,7 +487,6 @@ class Gui():
             self.second_peak = self.sampler.get_peak_fft()[0][1]
         self.glass_buttons[1].text = "1st peak " + "{0:.1f}".format(self.first_peak) + "Hz"
         self.glass_buttons[2].text = "2nd peak " + "{0:.1f}".format(self.second_peak) + "Hz"  
-        freq_label = self.font.render("{0:.1f}".format(self.interface.freq) + "Hz", 1, BLACK)
         if self.is_playing:
             self.top_buttons[3].text = "Stop"
             self.top_buttons[3].color = LIGHT_RED
@@ -665,9 +664,9 @@ class Gui():
 
     def main_loop(self):
         '''
-        this is the main loop of the gui. the commands within the loop are executed ~60/Sec. 
+        this is the main loop of the GUI. the commands within the loop are executed ~60/Sec. 
         it has two main objectives:
-        1. monitors the different events and call the relevant methods
+        1. monitor the different events and call the relevant methods
         2. call the 'draw' function in the appropriate rate  
         '''
         while not self.done:
