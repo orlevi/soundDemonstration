@@ -167,7 +167,7 @@ class Player():
 
     def _close_all_players(self):
         # ensure all players are closed wave, file, mic
-        # should be called in the play of every player
+        # sfhould be called in the play of every player
         try:
             print 'ensuring sine player is off'
             self.stop_sine_wave()
@@ -215,7 +215,7 @@ class Player():
                     self.vol = self.interface.vol
 
             audio_sine = self.vol * math.sin(2 * math.pi * self.freq * t / FS)
-            strobe_sine = 0 * math.sin(2 * math.pi * (self.freq + FREQ_SHIFT) * t / FS)
+            strobe_sine = 0.5 * math.sin(2 * math.pi * (self.freq + FREQ_SHIFT) * t / FS)
             output_wave.append([audio_sine, strobe_sine])
 
         self.last_val = t
