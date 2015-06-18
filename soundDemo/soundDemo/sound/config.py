@@ -1,7 +1,7 @@
 
 #### FFT sampler configurations ####
-MIN_USED_FREQUENCY = 600   
-MAX_USED_FREQUENCY = 900
+MIN_USED_FREQUENCY = 1200
+MAX_USED_FREQUENCY = 1700
 DELTA_FREQ_FOR_MAXIMA = 7  # minimal allowed distance (in Hz) of the second maxima from the first one
 
 VOLUME_MAXIMUM = 1          # maximal volume (when the volume bar is dragged to its end), should be value between 0 to 1, enough to break the glass, but not to violate the current/power limitations
