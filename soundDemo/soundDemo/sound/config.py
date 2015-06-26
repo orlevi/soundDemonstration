@@ -1,6 +1,6 @@
 
 #### FFT sampler configurations ####
-MIN_USED_FREQUENCY = 1200
+MIN_USED_FREQUENCY = 400
 MAX_USED_FREQUENCY = 1700
 DELTA_FREQ_FOR_MAXIMA = 7  # minimal allowed distance (in Hz) of the second maxima from the first one
 
@@ -21,6 +21,11 @@ CHLADNI_FIXED_6 = [850, 0.35]
 TUBE_FIXED_1 = [550, 0.4]
 TUBE_FIXED_2 = [650, 0.45]
 TUBE_FIXED_3 = [750, 0.5]
+
+#### Sweeper's parameters
+SWEEP_FREQ_STEP_SIZE = 0.1  # in Hz
+SWEEP_TIME_INTERVAL = 200    # in ms
+SWEEP_NUMBER_OF_STEPS = 10    # For each direction
 
 WAV_FILE = 'simsg813.wav'
 
