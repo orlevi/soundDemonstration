@@ -13,7 +13,7 @@ import config as config
 
 ################# Global Consts
 BITRATE = 44100
-PYAUDIO_FORMAT = pyaudio.paInt16
+PYAUDIO_FORMAT = pyaudio.paInt16  # make sure pyaudio and numpy formats are the same
 NUMPY_DATA_FORMAT = numpy.int16
 PYAUDIO_BUFFER_SIZE = 1024
 TIME_TO_RECORD = 0.26  # time to record before calculating fft
@@ -73,6 +73,9 @@ class Sampler(object):
         return self._peakFFT
 
     def reset_max_fft(self):
+        """
+        reset current max fft data
+        """
         self._peakFFT = ([0, 0], [0, 0])
         self._peak_waveform = numpy.zeros(len(self._fft_frequencies))
 
@@ -85,12 +88,15 @@ class Sampler(object):
             self._stop_recording_thread = True
 
     def get_peak_waveform(self):
+        """
+        :return: the waveform that had the highest peak from the beginning of sampling or from the last time
+        reset_max_fft was called
+        """
         return self._fft_frequencies, self._peak_waveform
 
     def start_microphone_sampling(self):
         """
-        start to probe microphone for microphone_sampling_time time and compute FFT
-        :return:
+        start to probe microphone and computing FFT on the samples
         """
         # open recorder thread
         recorder_thread = threading.Thread(target=self._record)
@@ -103,7 +109,6 @@ class Sampler(object):
     def close_pyaudio_nicely(self):
         """
         close streams and pyaudio object
-        :return:
         """
         logging.debug("closing PyAudio nicely")
         self._stop_recording_thread = True
@@ -144,7 +149,6 @@ class Sampler(object):
         initialize all kind of buffers
         open stream to microphone
         calculate Frequency Axis of FFT
-        :return:
         """
         self._buffers_to_record = max(1, int(self._bitrate * self._sec_to_record / self._buffer_size))  # how many full pyaudio buffers in time*bitrate
         self._samples_to_record = int(self._buffer_size * self._buffers_to_record)
@@ -166,9 +170,7 @@ class Sampler(object):
         save data in self._audio
         when new data was written, raise flag self._new_audio, do not read new data until flag is down
         """
-
         logging.debug("started recorder thread")
-
         while not self._stop_recording_thread:
             if self._fft_compute:
                 if not self._new_audio:
@@ -209,7 +211,6 @@ class Sampler(object):
         :param log_scale: if True, update FFT data in dB
         :return:
         """
-
         data = self._audio
         if self._first:
             logging.debug("data length without padding {}".format(len(data)))
@@ -229,6 +230,13 @@ class Sampler(object):
         self._new_fft = True
 
     def _find_maximas(self, fft_values):
+        """
+        find the two highest valus and there place in the given fft_values.
+        1. find first maximum value
+        2. search for next one but make sure it is not to close to the first one
+            (controlled by DELTA_FREQ_FOR_MAXIMA parameter in config)
+        :param fft_values: fft_values array to search in
+        """
         # find firs maxima
         max_p = fft_values.argmax()
         max_val = fft_values[max_p]

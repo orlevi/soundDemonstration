@@ -16,19 +16,23 @@ import config as config
 
 FS = 44100
 CHUNK = 1024
-FREQ_SHIFT = 1
+FREQ_SHIFT = 1  # frequency difference between strobe and sound output
 MIN_VALUE_TO_ALLOW_CHANGE = 0.98
 MAX_VOL_CHANGE = 0.001
-SLEEP_TIME_BUFFER_UNDERRUN = 0.1
+SLEEP_TIME_BUFFER_UNDERRUN = 0.1  # [S] if for some reason player didnt have what to play, wait this amount of secounds for input to gather
 BUFFER_QUEUE_SIZE = 10
 
 
 class Player():
-    '''
-    '''
+    """
+    play sounds out to speakers output,
+     supports:
+     1. sine wave + second sine wave (for strobe)
+     2. play music from wav file
+     3. channel microphone input to speakers output
+    """
+
     def __init__(self, interface):
-        '''
-        '''
         self.interface = interface       
         self.player = pyaudio.PyAudio()
         self.last_val = 0
@@ -63,7 +67,7 @@ class Player():
     def stop_sine_wave(self):
         self.is_playing = False
         time.sleep(0.1)
-        while not self.chunk_queue.empty():    #emptying the queue so next time we start without leftovers
+        while not self.chunk_queue.empty():  # emptying the queue so next time we start without leftovers
             self.chunk_queue.get_nowait()
         try:
             self.stream.stop_stream()

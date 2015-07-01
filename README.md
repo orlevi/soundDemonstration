@@ -14,3 +14,28 @@
 ####configuration
 
 1. all configuration are done in file config.py
+
+
+---------- code guidance
+
+######gui.py
+    - gui module, define all buttons and some logic
+
+######player.py
+    - module that helps play sounds, supports sine waves, wav files and microphone to speakers channeling.
+    - controls the stroboscope sine wave (with a frequency shift)
+
+######sampler.py
+    - samples microphone input and calculates FFT on the input
+
+######interface.py
+    - holds dome logic and connections mainly between gui and player
+
+######__init__.py
+    - start the gui program
+
+######config.py
+    - user configuration
+
+######offlineRecorder.py
+    - experimental sampler, record a preconfigured time from the microphone and calculate the FFT offline
