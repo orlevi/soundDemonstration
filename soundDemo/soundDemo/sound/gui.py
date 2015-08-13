@@ -444,11 +444,12 @@ class Gui():
         self.top_buttons.append(Button((1.0/60, 22.0/60),(3.0/60, 15.0/60),"Chladni Plate", self.set_chladni))
         self.top_buttons.append(Button((1.0/60, 39.0/60),(3.0/60, 15.0/60),"Ruben's Tube", self.set_ruben))
 
-        self.top_buttons.append(Button((47.0/60,3.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave, color = LIGHT_GREEN))
-              
+        self.top_buttons.append(Button((41.0/60,3.0/60),(5.0/60,10.0/60),"Play", self.play_stop_wave, color = LIGHT_GREEN))
+
         self.glass_buttons.append(Button((53.0/60,3.0/60),(5.0/60,10.0/60),"RESET MAX", self.sampler.reset_max_fft))
         self.glass_buttons.append(Button((47.0/60,34.0/60),(5.0/60,25.0/60),'1st peak', self.set_first_peak))
         self.glass_buttons.append(Button((53.0/60,34.0/60),(5.0/60,25.0/60),'2nd peak', self.set_second_peak))
+        self.glass_buttons.append(Button((47.0/60,3.0/60),(5.0/60,10.0/60),"Sweep", self.sweep_enable_disable))
         #self.glass_buttons.append(Button((35.0/60,5.0/60),(5.0/60,10.0/60),"FFT", self.sampler.stop_start_FFT_computation))
         
         self.chladni_buttons.append(Button((5.0/60,17.0/60),(5.0/60,33.0/60),"Chladni fixed freq I", self.chladni_fixed_1))
@@ -468,13 +469,20 @@ class Gui():
         
         self.freq_controller = FrequencyController((47.0/60,14.0/60), (11.0/60,15.0/60), self.height, self.width, self.interface)
         
-        self.volume_scroll = Scroll((8.0/60,5.5/60), (2.5/60,38.0/60), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
+        self.volume_scroll = Scroll((8.0/60,5.5/60), (2.5/60,34.0/60), self.interface.setVol, config.VOLUME_DEFAULT, config.VOLUME_MAXIMUM)
         
         self.freq_line = []
         self.fft_data = []
         self.fft_peak_data = []
       
+        self.sweep_enable = False
+        self.sweep_time_counter = 0
+        self.sweep_step_counter = 0
+        self.sweep_center_freq = 0
+
         self.main_loop()                                        # start the main loop of the gui
+
+
     
     def draw(self):
         '''
@@ -662,6 +670,42 @@ class Gui():
         self.interface.setFreq(config.TUBE_FIXED_3[0])
         self.interface.setVol(config.TUBE_FIXED_1[1])
 
+    def sweep_enable_disable(self):
+        '''
+        this is binded to the sweep button, starts/stops the sweep
+        '''
+        self.sweep_enable = not self.sweep_enable
+
+    def sweep_freq(self,ms):
+        '''
+        self.sweep_time_counter += ms
+        step_delta = math.floor(self.sweep_time_counter/self.sweep_time_interval)
+        if step_delta > 0:
+            self.sweep_step_counter += step_delta #idially step_delta=1 if not, we need larger time_interval
+            sc=self.sweep_step_counter
+            self.sweep_time_counter -= step_delta*self.sweep_time_interval
+            print 'total shift ' +str((1-2*math.fmod(math.floor(sc/(self.sweep_number_of_steps*2)),2))*(self.sweep_number_of_steps-math.fmod(sc,self.sweep_number_of_steps*2)-1)*self.sweep_freq_step_size)
+
+            freq = self.sweep_center_freq+(1-2*math.fmod(math.floor(sc/(self.sweep_number_of_steps*2)),2))*(self.sweep_number_of_steps-math.fmod(sc,self.sweep_number_of_steps*2)-1)*self.sweep_freq_step_size
+            print 'freq change by sweeper to ' + str(freq)
+            self.interface.setFreq(freq)
+            if self.sweep_step_counter == 4*self.sweep_number_of_steps:
+                # the formula of freq is periodic at 4*self.sweep_step_size, meant to prevent overflow
+                self.sweep_step_counter=0
+        '''
+        self.sweep_time_counter += ms
+        if (self.sweep_time_counter/config.SWEEP_TIME_INTERVAL) > 1:
+            print 'sweep_time_counter is: ' + str(self.sweep_time_counter)
+            self.sweep_time_counter = 0
+            freq= self.sweep_center_freq + (self.sweep_step_counter - config.SWEEP_NUMBER_OF_STEPS) * config.SWEEP_FREQ_STEP_SIZE
+            self.interface.setFreq(freq)
+            self.sweep_step_counter += 1
+            print 'sweep_step_counter is: ' + str(self.sweep_step_counter)
+            print 'sweep_number_of_steps is: ' + str(config.SWEEP_NUMBER_OF_STEPS)
+        if self.sweep_step_counter > config.SWEEP_NUMBER_OF_STEPS * 2:
+            self.sweep_step_counter = 0
+
+
     def main_loop(self):
         '''
         this is the main loop of the GUI. the commands within the loop are executed ~60/Sec. 
@@ -737,7 +781,16 @@ class Gui():
             self.draw()         
             pygame.display.update()
             ms = self.fps_Clock.tick(60)
-            
+
+            if (self.sweep_enable) and (self.in_glass) and (self.is_playing):
+                if self.sweep_center_freq==0: #if it's the first time of the loop, make sure to save the center frequency
+                    self.sweep_center_freq = self.interface.freq
+                self.sweep_freq(ms)
+            else: #return the center freq to normal
+                if self.sweep_center_freq != 0:
+                    self.interface.setFreq(self.sweep_center_freq)
+                self.sweep_center_freq=0
+
             # track the time for the volume to jump back to minimum after the key was released
             self.volume_scroll.handle_control_timeout(ms)
                 
